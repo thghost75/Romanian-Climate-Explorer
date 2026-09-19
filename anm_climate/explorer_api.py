@@ -10,7 +10,7 @@ import unicodedata
 from datetime import date, timedelta
 from pathlib import Path
 
-from .config import DEFAULT_ROOT
+from .config import DEFAULT_ROOT, readonly_uri
 from .phase3_api import ClimatologyStore
 from .phase3_policy import PERIODS, VARIABLES, CALENDAR
 
@@ -25,7 +25,7 @@ def search_key(value):
                    if not unicodedata.combining(c)).replace("ţ", "t").replace("ş", "s")
 
 def readonly(path):
-    db = sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro", uri=True)
+    db = sqlite3.connect(readonly_uri(path), uri=True)
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA query_only=ON")
     return db

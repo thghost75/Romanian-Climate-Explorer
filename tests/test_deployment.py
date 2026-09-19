@@ -4,6 +4,8 @@ from http.server import ThreadingHTTPServer
 import io
 import json
 import os
+import sqlite3
+from contextlib import closing
 from pathlib import Path
 import tempfile
 import threading
@@ -13,6 +15,8 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 from api.index import handler
+from anm_climate.explorer_api import readonly
+from anm_climate.phase3_api import ClimatologyStore
 from scripts.fetch_snapshot import HTTPSRedirectHandler, github_asset_urls, install_stream, snapshot_request
 
 TEST_TMP = Path(__file__).resolve().parent / '_tmp'
@@ -73,6 +77,23 @@ class SnapshotTests(unittest.TestCase):
             install_stream(io.BytesIO(gzip.compress(self.payload * 2)), self.target, self.entry)
         self.assertFalse(self.target.exists())
 
+    def test_deployed_wal_snapshot_never_creates_sidecar_files(self):
+        with closing(sqlite3.connect(self.target)) as writer:
+            writer.execute('PRAGMA journal_mode=WAL')
+            writer.execute('CREATE TABLE metadata (key TEXT, value TEXT)')
+            writer.executemany('INSERT INTO metadata VALUES (?, ?)', [('policy', '{}'), ('state', '"complete"')])
+            writer.commit()
+            writer.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+        self.assertEqual(self.target.read_bytes()[18:20], b'\x02\x02')
+        before = set(self.target.parent.iterdir())
+        with patch.dict(os.environ, {'VERCEL': '1'}):
+            with closing(readonly(self.target)) as source, ClimatologyStore(self.target) as products:
+                self.assertEqual(source.execute('SELECT COUNT(*) FROM metadata').fetchone()[0], 2)
+                self.assertEqual(products.policy, {})
+                self.assertEqual(set(self.target.parent.iterdir()), before)
+                with self.assertRaises(sqlite3.OperationalError):
+                    products.db.execute('DELETE FROM metadata')
+
 
 class QuietHandler(handler):
     def log_message(self, *args):
@@ -128,6 +149,16 @@ class RoutingTests(unittest.TestCase):
                 status, data = self.request(path)
                 self.assertEqual(status, 503)
                 self.assertEqual(data, {'service': 'romanian-climate-explorer', 'data_ready': False})
+
+    def test_health_rejects_present_but_unreadable_databases(self):
+        with tempfile.TemporaryDirectory(dir=TEST_TMP) as folder, patch.dict(os.environ, {'CLIMATE_DATA_ROOT': folder}):
+            root = Path(folder)
+            (root / 'climate.sqlite').write_bytes(b'not a database')
+            (root / 'climatology.sqlite').write_bytes(b'not a database')
+            notes = root / 'processed/phase3/candidate_review_notes.json'
+            notes.parent.mkdir(parents=True)
+            notes.write_text('[]')
+            self.assertEqual(self.request('/api/health'), (503, {'service': 'romanian-climate-explorer', 'data_ready': False}))
 
     @unittest.skipUnless((Path(__file__).resolve().parents[1] / 'data/anm/climatology.sqlite').exists(), 'Snapshot required')
     def test_real_snapshot_through_vercel_entrypoint(self):

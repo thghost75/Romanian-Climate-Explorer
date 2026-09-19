@@ -74,6 +74,12 @@ repository into Vercel does not automatically authenticate this custom downloade
 Do not append a filename to the release URL. Do not set
 `CLIMATE_DATA_ROOT` on Vercel; that option is only useful for local tests.
 
+If the import form labels `VERCEL_SUPPORT_LARGE_FUNCTIONS` as "Populated by
+System" and disables its value, remove that row from the import form. After the
+project is created, add it in **Project → Environment Variables → Add Environment
+Variable** as a **Config** value of `1`, for Production and Preview, then redeploy.
+The project settings form accepts this switch even when the importer does not.
+
 Now deploy. The build downloads about 650 MB; its logs should show both
 `SHA-256 verified` messages and `Read-only climate snapshot ready.`
 
@@ -105,6 +111,10 @@ Exported PNG and SVG charts should show **© WxProbs** as well as ANM attributio
 - **API 503:** the data files were not included or could not be read. Check the
   build logs and function bundle configuration; never move the databases into
   `web/` to make them accessible.
+
+On Vercel the verified, checkpointed databases are opened with SQLite's immutable
+mode, so WAL-format snapshots do not require writable sidecar files. The health
+check validates that both databases can actually be read, not just that they exist.
 
 The local packaging and API checks do not prove Vercel performance or Hobby
 eligibility. The first hosted deployment still needs the checks above. The free

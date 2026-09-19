@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import re
 
 BASE_URL = "https://odp.meteoromania.ro/station_data_series/climate/daily/"
@@ -10,6 +11,15 @@ MEASURES = {
     "ta": "tmean_c", "tn": "tmin_c", "tx": "tmax_c", "r": "precip_mm",
     "ff": "wind_mean_ms", "p": "pressure_msl_hpa",
 }
+
+
+def readonly_uri(path):
+    uri = Path(path).resolve().as_uri() + '?mode=ro'
+    # Vercel serves a verified, checkpointed snapshot on a read-only filesystem.
+    # Immutable mode prevents WAL databases from trying to create -shm/-wal files.
+    if os.environ.get('VERCEL') == '1':
+        uri += '&immutable=1'
+    return uri
 
 def validate_identity(station, year):
     if not STATION_PATTERN.fullmatch(station):

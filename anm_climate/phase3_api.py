@@ -4,7 +4,7 @@ import math
 import sqlite3
 from datetime import date
 from pathlib import Path
-from .config import DEFAULT_ROOT
+from .config import DEFAULT_ROOT, readonly_uri
 from .phase3_policy import VARIABLES, PERIODS, percentile_rank
 
 ALIASES={"tmean":"tmean_c","tmin":"tmin_c","tmax":"tmax_c","precip":"precip_mm",
@@ -13,7 +13,7 @@ ALIASES={"tmean":"tmean_c","tmin":"tmin_c","tmax":"tmax_c","precip":"precip_mm",
 class ClimatologyStore:
     def __init__(self,path=None):
         self.path=Path(path or DEFAULT_ROOT/"climatology.sqlite").resolve()
-        self.db=sqlite3.connect(self.path.as_uri()+"?mode=ro",uri=True)
+        self.db=sqlite3.connect(readonly_uri(self.path),uri=True)
         self.db.row_factory=sqlite3.Row
         row=self.db.execute("SELECT value FROM metadata WHERE key='policy'").fetchone()
         self.policy=json.loads(row[0])

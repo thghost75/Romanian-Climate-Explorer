@@ -2,7 +2,10 @@
 
 Checked on 19 September 2026:
 
-- 25 tests passed: 14 climate API tests and 11 deployment/snapshot tests.
+- 27 tests passed: 14 climate API tests and 13 deployment/snapshot tests.
+- The suite also passes with `VERCEL=1`. The deployment reader queries a WAL
+  snapshot without creating sidecar files; the health check rejects unreadable
+  databases even when their paths exist.
 - Private GitHub releases use the authenticated API. Tests confirm credentials
   are stripped from redirects, are restricted to api.github.com, and HTTPS is
   required for redirects.

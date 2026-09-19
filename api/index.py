@@ -2,12 +2,15 @@
 import json
 import os
 import re
+import sqlite3
+from contextlib import closing
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlparse
 
 from anm_climate.config import DEFAULT_ROOT
 from anm_climate.explorer_http import handle_climate
+from anm_climate.explorer_api import readonly
 
 REQUIRED_FILES = ('climate.sqlite', 'climatology.sqlite', 'processed/phase3/candidate_review_notes.json')
 
@@ -46,6 +49,13 @@ class handler(BaseHTTPRequestHandler):
             root = Path(os.environ.get('CLIMATE_DATA_ROOT', str(DEFAULT_ROOT)))
             if endpoint == 'health':
                 ready = all((root / name).is_file() for name in REQUIRED_FILES)
+                if ready:
+                    try:
+                        for name in REQUIRED_FILES[:2]:
+                            with closing(readonly(root / name)) as database:
+                                database.execute('SELECT name FROM sqlite_master LIMIT 1').fetchone()
+                    except (sqlite3.Error, OSError):
+                        ready = False
                 self.json_response(200 if ready else 503, {
                     'service': 'romanian-climate-explorer', 'data_ready': ready,
                 })
