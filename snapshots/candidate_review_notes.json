@@ -1,0 +1,11 @@
+[
+  {
+    "station_id": "0-20000-0-15324",
+    "station_name": "C-LUNG MUSCEL",
+    "start_date": "1931-12-01",
+    "end_date": "1931-12-31",
+    "review_reason": "31 consecutive December Tmax values of 15-24 C and mean anomaly about +15.57 C relative to the centered modern baseline; exceptional seasonal pattern requiring source/historical confirmation.",
+    "source_checked": "Phase 2 raw_values_json and source_member match the imported numbers and December dates. Basic original flags are empty on sampled rows.",
+    "action": "Preserved unchanged as an algorithmic candidate. No unit/date correction or extra climatology exclusion inferred."
+  }
+]

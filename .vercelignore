@@ -1,0 +1,10 @@
+.git/
+.github/
+.venv/
+__pycache__/
+**/__pycache__/
+tests/
+release-assets/
+*.gz
+*.log
+.env*

@@ -1,0 +1,59 @@
+"""Vercel entrypoint: same read-only climate service, no local server startup."""
+import json
+import os
+import re
+from http.server import BaseHTTPRequestHandler
+from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlparse
+
+from anm_climate.config import DEFAULT_ROOT
+from anm_climate.explorer_http import handle_climate
+
+REQUIRED_FILES = ('climate.sqlite', 'climatology.sqlite', 'processed/phase3/candidate_review_notes.json')
+
+
+class handler(BaseHTTPRequestHandler):
+    def json_response(self, status, payload):
+        body = json.dumps(payload).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self.send_header('Cache-Control', 'no-store')
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        try:
+            if len(parsed.query) > 2300:
+                raise ValueError('Query is too long')
+            pairs = parse_qsl(parsed.query, keep_blank_values=True, max_num_fields=18)
+            routed = [v for k, v in pairs if k == '__climate_endpoint']
+            if len(routed) > 1:
+                raise ValueError('Ambiguous endpoint')
+            # Support both Vercel's rewritten URL and direct local HTTP requests.
+            if parsed.path.startswith('/api/climate/'):
+                endpoint = parsed.path[len('/api/climate/'):]
+            elif parsed.path == '/api/health':
+                endpoint = 'health'
+            elif parsed.path in ('/api', '/api/', '/api/index', '/api/index.py') and routed:
+                endpoint = routed[0]
+            else:
+                self.json_response(404, {'error': 'Unknown route'})
+                return
+            if not re.fullmatch(r'[a-z-]+', endpoint) or (routed and routed[0] != endpoint):
+                raise ValueError('Invalid endpoint')
+            root = Path(os.environ.get('CLIMATE_DATA_ROOT', str(DEFAULT_ROOT)))
+            if endpoint == 'health':
+                ready = all((root / name).is_file() for name in REQUIRED_FILES)
+                self.json_response(200 if ready else 503, {
+                    'service': 'romanian-climate-explorer', 'data_ready': ready,
+                })
+                return
+            query = urlencode([(k, v) for k, v in pairs if k != '__climate_endpoint'])
+            handle_climate(self, '/api/climate/' + endpoint, query, root=root)
+        except ValueError as error:
+            self.json_response(400, {'error': str(error)})
+
+    def do_POST(self):
+        self.json_response(405, {'error': 'This API is read-only. Use GET.'})

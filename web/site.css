@@ -1,0 +1,18 @@
+/* Quiet, self-contained typography; no remote font or image dependencies. */
+:root{color-scheme:light;--bg:#f3f6f8;--panel:#fff;--ink:#172c3c;--muted:#637888;--line:#dfe7ec;--accent:#087e82;--accent-strong:#075d64;--warn:#a55d1a;--font:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;--shadow:0 5px 24px #18394b06}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;overflow-anchor:none;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}button,a,input,select{-webkit-tap-highlight-color:transparent}
+.site-header{min-height:80px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:16px max(32px,calc((100vw - 1432px)/2));background:#fff;border-bottom:1px solid var(--line)}
+.site-brand{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none;min-width:0}
+.site-brand h1{font-size:18px;font-weight:700;line-height:1.3;margin:0;letter-spacing:-.5px}
+.site-brand img{flex-shrink:0;width:38px;height:38px;border-radius:11px}
+.site-subtitle{display:block;font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.25px}
+.site-source{font-size:12px;color:#506c76;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:50px;padding:7px 12px;white-space:nowrap}
+.site-source:before{content:"";width:6px;height:6px;flex-shrink:0;border-radius:50%;background:#0e8587}
+.site-footer{max-width:1496px;margin:auto;padding:12px 32px 32px;font-size:12px;color:var(--muted)}
+.site-footer a{color:var(--accent-strong);text-underline-offset:3px}
+.skip-link{position:absolute;left:12px;top:-100px;background:white;padding:12px;z-index:10001;color:var(--accent-strong)}.skip-link:focus{top:12px}
+a:focus-visible{outline:3px solid #159398;outline-offset:5px;border-radius:4px}
+::selection{background:#c4ebe6;color:#143c43}
+@media(max-width:760px){.site-header{min-height:70px;padding:14px 18px}.site-brand h1{font-size:16px}.site-subtitle{font-size:12px}.site-source{display:none}.site-footer{padding:12px 18px 24px}}

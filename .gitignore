@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+.vercel/
+.env
+.env.*
+!.env.example
+data/
+release-assets/
+*.sqlite*
+*.gz
+*.part
+*.log
+tests/_tmp/

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore Romania's historical weather: station records, climate normals, daily charts and extreme events from the ANM archive.">
+  <title>Romanian Climate Explorer</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="climate.css">
+</head>
+<body>
+  <a class="skip-link" href="#climateExplorer">Skip to explorer</a>
+  <header class="site-header">
+    <a class="site-brand" href="#climate" aria-label="Romanian Climate Explorer home">
+      <img src="favicon.svg" alt="" width="42" height="42">
+      <span><h1>Romanian Climate Explorer</h1><span class="site-subtitle">Romania’s weather, through time</span></span>
+    </a>
+    <span class="site-source">ANM data · 160 stations</span>
+  </header>
+  <main id="climateExplorer" class="climate-app" tabindex="-1"></main>
+  <noscript>This explorer needs JavaScript to display station maps and weather charts.</noscript>
+  <footer class="site-footer">Source: <a href="https://odp.meteoromania.ro/station_data_series/climate/daily/" target="_blank" rel="noopener noreferrer">ANM / MeteoRomania Open Data Portal</a></footer>
+  <script src="daily-charts.js"></script>
+  <script src="climate.js"></script>
+</body>
+</html>

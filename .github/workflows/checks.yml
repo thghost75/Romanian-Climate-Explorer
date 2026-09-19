@@ -1,0 +1,21 @@
+name: Check site and deployment code
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m unittest discover -s tests -v
+      - run: node --check web/climate.js
+      - run: node --check web/daily-charts.js
+      - name: Ensure databases are outside Git and the public directory
+        run: |
+          python -c "import pathlib, subprocess; files=subprocess.check_output(['git','ls-files'],text=True).splitlines(); assert not any('.sqlite' in p or p.endswith('.gz') for p in files); assert not any(p.suffix in ('.sqlite','.gz','.py') for p in pathlib.Path('web').rglob('*'))"

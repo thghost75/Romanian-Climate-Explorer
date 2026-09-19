@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "name": "climate.sqlite",
+      "asset": "climate.sqlite.gz",
+      "bytes": 2342174720,
+      "sha256": "4609935d85c58dd3c7eb249147dd93d3413016672aaa34f46c6e8d9225c1f872",
+      "compressed_bytes": 414246339
+    },
+    {
+      "name": "climatology.sqlite",
+      "asset": "climatology.sqlite.gz",
+      "bytes": 1643450368,
+      "sha256": "d1b1170cc5bc045cc3f64ecfb9b90ed2aefc9628d945962b023cf29990c445ce",
+      "compressed_bytes": 235239912
+    }
+  ],
+  "review_notes_sha256": "e8b46e38ba5587592662de50d1720729f3937e1e300de4b0f9ad9a9c69f7e66f"
+}
