@@ -32,7 +32,8 @@ class handler(BaseHTTPRequestHandler):
                 raise ValueError('Query is too long')
             pairs = parse_qsl(parsed.query, keep_blank_values=True, max_num_fields=18)
             routed = [v for k, v in pairs if k == '__climate_endpoint']
-            if len(routed) > 1:
+            captured = [v for k, v in pairs if k == 'endpoint']
+            if len(routed) > 1 or len(captured) > 1:
                 raise ValueError('Ambiguous endpoint')
             # Support both Vercel's rewritten URL and direct local HTTP requests.
             if parsed.path.startswith('/api/climate/'):
@@ -44,7 +45,9 @@ class handler(BaseHTTPRequestHandler):
             else:
                 self.json_response(404, {'error': 'Unknown route'})
                 return
-            if not re.fullmatch(r'[a-z-]+', endpoint) or (routed and routed[0] != endpoint):
+            if (not re.fullmatch(r'[a-z-]+', endpoint)
+                    or (routed and routed[0] != endpoint)
+                    or (captured and captured[0] != endpoint)):
                 raise ValueError('Invalid endpoint')
             root = Path(os.environ.get('CLIMATE_DATA_ROOT', str(DEFAULT_ROOT)))
             if endpoint == 'health':
@@ -60,7 +63,8 @@ class handler(BaseHTTPRequestHandler):
                     'service': 'romanian-climate-explorer', 'data_ready': ready,
                 })
                 return
-            query = urlencode([(k, v) for k, v in pairs if k != '__climate_endpoint'])
+            # Vercel also forwards the named :endpoint path capture as a query.
+            query = urlencode([(k, v) for k, v in pairs if k not in ('__climate_endpoint', 'endpoint')])
             handle_climate(self, '/api/climate/' + endpoint, query, root=root)
         except ValueError as error:
             self.json_response(400, {'error': str(error)})

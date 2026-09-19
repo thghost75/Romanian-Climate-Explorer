@@ -128,7 +128,8 @@ class RoutingTests(unittest.TestCase):
         with patch('api.index.handle_climate', fake):
             for path in ['/api?__climate_endpoint=overview&station=ABC&year=2025',
                          '/api/climate/overview?station=ABC&year=2025',
-                         '/api/climate/overview?__climate_endpoint=overview&station=ABC&year=2025']:
+                         '/api/climate/overview?__climate_endpoint=overview&station=ABC&year=2025',
+                         '/api/climate/overview?__climate_endpoint=overview&endpoint=overview&station=ABC&year=2025']:
                 status, body = self.request(path)
                 self.assertEqual(status, 200)
                 self.assertEqual(body, {'path': '/api/climate/overview', 'query': 'station=ABC&year=2025'})
@@ -136,6 +137,8 @@ class RoutingTests(unittest.TestCase):
     def test_ambiguous_or_invalid_routes_are_rejected(self):
         for path in ['/api?__climate_endpoint=a&__climate_endpoint=b',
                      '/api/climate/stations?__climate_endpoint=overview',
+                     '/api/climate/stations?endpoint=overview',
+                     '/api/climate/stations?endpoint=stations&endpoint=stations',
                      '/api?__climate_endpoint=../data']:
             self.assertEqual(self.request(path)[0], 400)
 
