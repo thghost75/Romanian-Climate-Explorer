@@ -11,8 +11,8 @@ and SVG chart. ANM attribution is retained separately.
 Start with **[DEPLOY.md](DEPLOY.md)**. This repository contains the application
 code and a pinned data manifest. The two large databases are **GitHub Release
 attachments**, not Git files. Vercel downloads and verifies them during its build.
-The repository remains private. Add a repository-scoped, read-only
-`CLIMATE_GITHUB_TOKEN` in Vercel as described in the deployment guide.
+The repository and releases are public. Vercel downloads the pinned snapshot
+anonymously; no personal GitHub token or token renewal is needed.
 
 The live site is https://romanian-climate-explorer.vercel.app/. It uses Vercel's
 **Large Functions beta** because the uncompressed snapshot is about 3.99 GB.

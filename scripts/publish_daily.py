@@ -49,8 +49,8 @@ def publish():
     if repo != 'thghost75/Romanian-Climate-Explorer':
         raise ValueError('Unexpected publishing repository')
     base = 'https://api.github.com/repos/' + repo
-    if not api(base)['private']:
-        raise ValueError('This workflow requires the repository to remain private')
+    if api(base)['full_name'] != repo:
+        raise ValueError('Publishing repository identity did not match')
     expected = os.environ['GITHUB_SHA']
     git('fetch', 'origin', 'main')
     if git('rev-parse', 'origin/main') != expected or git('rev-parse', 'HEAD') != expected:
@@ -82,6 +82,7 @@ def publish():
     api(base + '/releases/' + str(release['id']), 'PATCH', {'draft': False, 'make_latest': 'false'})
     manifest_path = PROJECT / 'snapshots/manifest.json'
     manifest = json.loads(manifest_path.read_text())
+    manifest['public'] = True
     manifest['base_url'] = 'https://github.com/' + repo + '/releases/download/' + tag
     manifest['refresh'] = result
     manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')

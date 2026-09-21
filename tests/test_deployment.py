@@ -81,6 +81,36 @@ class SnapshotTests(unittest.TestCase):
                 fetch()
         self.assertEqual(resolve.call_args.args[0], manifest['base_url'])
 
+    def test_public_snapshot_download_ignores_expired_personal_token(self):
+        project = Path(self.directory.name)
+        (project / 'snapshots').mkdir()
+        notes = b'[]'
+        manifest = {'version': 1, 'public': True,
+            'base_url': 'https://github.com/o/r/releases/download/public',
+            'review_notes_sha256': hashlib.sha256(notes).hexdigest(),
+            'files': [{'name': name, 'asset': name + '.gz', 'bytes': len(self.payload),
+                       'sha256': hashlib.sha256(self.payload).hexdigest()}
+                      for name in ('climate.sqlite', 'climatology.sqlite')]}
+        (project / 'snapshots/manifest.json').write_text(json.dumps(manifest))
+        (project / 'snapshots/candidate_review_notes.json').write_bytes(notes)
+        requests = []
+        def open_public(request, **kwargs):
+            requests.append(request)
+            response = io.BytesIO(gzip.compress(self.payload))
+            response.geturl = lambda: 'https://release-assets.githubusercontent.com/public-asset'
+            return response
+        opener = Mock()
+        opener.open.side_effect = open_public
+        with patch('scripts.fetch_snapshot.PROJECT', project), patch.dict(os.environ, {
+            'CLIMATE_GITHUB_TOKEN': 'obsolete-expired-token'}), patch(
+                'scripts.fetch_snapshot.build_opener', return_value=opener), patch(
+                'scripts.fetch_snapshot.github_asset_urls') as private_api:
+            fetch()
+        private_api.assert_not_called()
+        self.assertEqual(len(requests), 2)
+        self.assertTrue(all(r.get_header('Authorization') is None for r in requests))
+        self.assertEqual((project / 'data/anm/climate.sqlite').read_bytes(), self.payload)
+
     def test_remote_asset_digest_must_match_before_publication(self):
         self.target.write_bytes(self.payload)
         remote = {'state': 'uploaded', 'size': len(self.payload),

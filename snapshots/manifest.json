@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "public": true,
   "files": [
     {
       "name": "climate.sqlite",

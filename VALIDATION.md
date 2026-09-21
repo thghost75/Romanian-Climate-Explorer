@@ -1,5 +1,14 @@
 # Local deployment preparation check
 
+## Public release downloads, 21 September 2026
+
+55 tests pass locally. Public manifests explicitly use anonymous downloads,
+including when an obsolete personal token remains configured. The daily
+publisher accepts the authorized public repository, while retaining repository
+identity checks. A scan of all 75 historical source blobs found no common
+credential patterns before the owner-requested visibility change.
+The repository's public visibility was verified using an unauthenticated request.
+
 ## Daily refresh checks, 21 September 2026
 
 54 tests pass locally, including the existing API and immutable SQLite checks,

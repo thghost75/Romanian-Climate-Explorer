@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--output', required=True, type=Path)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    manifest = {'version': 1, 'files': []}
+    manifest = {'version': 1, 'public': True, 'files': []}
     total_size = sum((args.data_root / name).stat().st_size for name in ('climate.sqlite', 'climatology.sqlite'))
     if total_size >= 4_800_000_000:
         raise RuntimeError('Snapshot exceeds the safe Vercel function size; keep the current deployment')

@@ -26,7 +26,6 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Download and verify the last published snapshot
         env:
-          CLIMATE_GITHUB_TOKEN: ${{ github.token }}
           CLIMATE_SNAPSHOT_BASE_URL: https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-2026-09-17
         run: |
           python scripts/fetch_snapshot.py

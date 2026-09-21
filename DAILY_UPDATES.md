@@ -1,6 +1,6 @@
 # Daily observations update
 
-The private repository runs **Refresh daily ANM observations** in GitHub Actions
+The public repository runs **Refresh daily ANM observations** in GitHub Actions
 at **05:23 UTC every day** (08:23 in Romanian summer time, 07:23 in winter).
 GitHub may delay scheduled jobs; this is a daily check, not an exact publication
 time or a guarantee that ANM has published yesterday's observations.
@@ -39,10 +39,11 @@ those need a separate historical refresh and review.
 ## Credentials and limits
 
 GitHub uses its short-lived workflow `GITHUB_TOKEN` with repository Contents write
-permission to publish private release assets and the pinned manifest. It does
-not store a new long-lived write token. Vercel still needs the existing read-only
-`CLIMATE_GITHUB_TOKEN` to download private assets at build time. Replace that token
-before it expires; a failed token blocks new builds, not the existing deployment.
+permission to publish release assets and the pinned manifest. GitHub supplies
+this token automatically for each run; it needs no manual renewal. The source
+code and published data releases are public. Vercel and the refresh job download
+snapshots anonymously. No personal GitHub token is needed in Vercel; the manifest
+marks snapshots public so an obsolete token is ignored if one remains configured.
 
 The Vercel environment's original `CLIMATE_SNAPSHOT_BASE_URL` is now only a
 fallback. A release URL in `snapshots/manifest.json` takes precedence, so each
@@ -57,6 +58,9 @@ outgrow that allowance, the updater stops rather than publishing unusable data.
 Check the Actions run summary for observation dates and changed station counts.
 Failed-run notifications follow your GitHub notification settings. The site
 footer and `/data-status.json` identify the latest published observation date.
+GitHub may disable a public repository's schedule after 60 days without repository
+activity. Successful data updates normally create commits; if the source remains
+unchanged for that long, re-enable the workflow in Actions.
 
 ## Recovery
 

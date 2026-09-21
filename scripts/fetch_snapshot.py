@@ -100,7 +100,9 @@ def fetch(base_url=None, asset_dir=None, destination=None):
         raise ValueError('Snapshot leaves insufficient room in a 5 GB function')
     destination = Path(destination or PROJECT / 'data/anm')
     opener = build_opener(HTTPSRedirectHandler())
-    token = os.environ.get('CLIMATE_GITHUB_TOKEN', '').strip() if asset_dir is None else ''
+    # Public releases need no credentials. Ignore obsolete/expired Vercel tokens
+    # for a public snapshot, rather than allowing them to break anonymous access.
+    token = os.environ.get('CLIMATE_GITHUB_TOKEN', '').strip() if asset_dir is None and not manifest.get('public', False) else ''
     private_assets = None
     if asset_dir is None:
         # A committed release URL travels atomically with its matching checksums.
