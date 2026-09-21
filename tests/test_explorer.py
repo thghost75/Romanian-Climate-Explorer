@@ -5,9 +5,17 @@ import unittest
 from pathlib import Path
 from anm_climate.explorer_api import Explorer, search_key
 from anm_climate.explorer_http import handle_climate
+from anm_climate.station_names import resolve_station_name
 
 ROOT=Path(__file__).resolve().parents[1]/"data/anm"
 SID="0-20000-0-15085"
+
+class StationNameTests(unittest.TestCase):
+    def test_verified_fallback_preserves_source_names_and_unknown_ids(self):
+        self.assertEqual(resolve_station_name("0-20000-0-15465", None), "BAILESTI")
+        self.assertEqual(resolve_station_name("0-20000-0-15465", "Updated official name"),
+                         "Updated official name")
+        self.assertIsNone(resolve_station_name("0-20000-0-99999", None))
 
 @unittest.skipUnless((ROOT/"climatology.sqlite").exists(),"Verified climate snapshot required")
 class ExplorerTests(unittest.TestCase):
@@ -18,6 +26,17 @@ class ExplorerTests(unittest.TestCase):
         self.assertEqual(self.api.catalogue("Bistrița"),self.api.catalogue("Bistrita"))
         self.assertEqual(self.api.catalogue(SID)[0]["station_id"],SID)
         self.assertEqual(sum(s["has_coordinates"] for s in self.api.catalogue()),140)
+    def test_missing_names_are_searchable_and_used_in_calendar_records(self):
+        self.assertTrue(all(s["station_name"] for s in self.api.catalogue()))
+        self.assertEqual([s["station_id"] for s in self.api.catalogue("Băilești")],
+                         ["0-20000-0-15465"])
+        expected = {"0-20000-0-15465": "BAILESTI", "0-20000-0-15489": "ALEXANDRIA",
+                    "0-20000-0-15494": "BECHET", "0-20000-0-15289": "BANLOC"}
+        records = self.api.on_this_day(9,21)["records"]
+        for sid, name in expected.items():
+            rows = [r for r in records if r["station_id"] == sid]
+            self.assertTrue(rows, sid)
+            self.assertTrue(all(r["station_name"] == name for r in rows))
     def test_invalid_station_and_parameters(self):
         with self.assertRaises(LookupError): self.api.daily("bad",1,1,"1991-2020")
         for p in ({"year":"100000"},{"normal":"bad"},{"unexpected":"x"},{"month":"2","day":"30"}):

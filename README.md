@@ -58,7 +58,7 @@ node --check web/climate.js
 node --check web/daily-charts.js
 ```
 
-The 14 climate integration tests run when `data/anm` contains the verified
+The climate integration tests run when `data/anm` contains the verified
 snapshot. GitHub Actions runs the deployment tests and skips data-dependent
 checks when databases are absent.
 
@@ -89,3 +89,11 @@ Chart presentation: © WxProbs.
 Weather observations: Administrația Națională de Meteorologie (ANM),
 [MeteoRomania Open Data Portal](https://odp.meteoromania.ro/station_data_series/climate/daily/).
 WxProbs chart branding does not replace the underlying dataset attribution.
+
+The 20 station names absent from the ANM locations catalogue are supplemented by
+exact WIGOS matches from [WMO OSCAR/Surface](https://oscar.wmo.int/surface/rest/api/search/station?territoryName=ROU),
+verified on 21 September 2026. These names are stored in
+`anm_climate/station_names.py` and applied to the shared API catalogue, including
+search, calendar records and exports. Existing ANM names take precedence. The
+fallbacks persist across daily data refreshes; observation data and coordinates
+are unchanged.
