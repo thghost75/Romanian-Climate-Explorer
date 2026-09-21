@@ -12,3 +12,6 @@ release-assets/
 *.part
 *.log
 tests/_tmp/
+frontend/node_modules/
+frontend/src/data.json
+dist/

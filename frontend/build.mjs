@@ -1,0 +1,15 @@
+import {build} from 'esbuild';
+import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const result=await build({entryPoints:['src/App.tsx'],bundle:true,minify:true,format:'iife',target:'es2022',write:false,define:{'process.env.NODE_ENV':'"production"'}});
+const js=result.outputFiles[0].text;
+const css=(await Promise.all(['archive-base.css','style.css','archive-theme.css','theme.css'].map(name=>readFile('src/'+name,'utf8')))).join('\n');
+const hash=value=>createHash('sha256').update(value).digest('hex').slice(0,12);
+const script='workspace-'+hash(js)+'.js',styles='workspace-'+hash(css)+'.css';
+const themeInit="try{var saved=localStorage.getItem('wxprobs-theme');document.documentElement.dataset.theme=saved==='light'||saved==='dark'?saved:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch{document.documentElement.dataset.theme='dark';}";
+await mkdir('../dist',{recursive:true});
+await writeFile('../dist/'+script,js);
+await writeFile('../dist/'+styles,css);
+await writeFile('../dist/index.html',`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore Romania's weather archive: 160 stations, daily records, historic events, climate comparisons and interactive charts by WxProbs."><meta name="wxprobs-design" content="workspace-2026-09"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'"><title>Romanian Climate Explorer · WxProbs</title><link rel="icon" href="/favicon.svg"><script>${themeInit}</script><link rel="stylesheet" href="/${styles}"></head><body><div id="root"></div><noscript>This explorer needs JavaScript to display station maps and weather charts.</noscript><script src="/${script}" defer></script></body></html>`);
+for(const name of ['favicon.svg','data-status.json'])await copyFile('../web/'+name,'../dist/'+name);
+console.log('Built the WxProbs production workspace in dist/.');

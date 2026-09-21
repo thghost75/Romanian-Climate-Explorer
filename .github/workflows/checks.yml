@@ -17,6 +17,11 @@ jobs:
       - run: node --check web/climate.js
       - run: node --check web/daily-charts.js
       - run: node --check web/data-status.js
+      - run: npm ci --prefix frontend
+      - run: npm run check --prefix frontend
+      - run: node --check frontend/build.mjs
+      - run: node --check frontend/src/archive-engine.js
+      - run: node --check frontend/src/daily-charts.js
       - name: Ensure databases are outside Git and the public directory
         run: |
           python -c "import pathlib, subprocess; files=subprocess.check_output(['git','ls-files'],text=True).splitlines(); assert not any('.sqlite' in p or p.endswith('.gz') for p in files); assert not any(p.suffix in ('.sqlite','.gz','.py') for p in pathlib.Path('web').rglob('*'))"

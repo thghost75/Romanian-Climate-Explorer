@@ -1,15 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "python3 --version",
-  "buildCommand": "python3 scripts/fetch_snapshot.py",
-  "outputDirectory": "web",
+  "installCommand": "npm ci --prefix frontend",
+  "buildCommand": "python3 scripts/build_site.py",
+  "outputDirectory": "dist",
   "fluid": true,
   "functions": {
     "api/index.py": {
       "maxDuration": 300,
       "includeFiles": "{anm_climate/**,data/anm/**}",
-      "excludeFiles": "{web/**,tests/**,scripts/**,snapshots/**,.github/**,**/__pycache__/**,*.md,*.cmd}"
+      "excludeFiles": "{web/**,dist/**,frontend/**,node_modules/**,tests/**,scripts/**,snapshots/**,.github/**,**/__pycache__/**,*.md,*.cmd}"
     }
   },
   "rewrites": [

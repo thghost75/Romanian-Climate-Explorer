@@ -11,11 +11,18 @@ root and framework preset **Other**. The committed `vercel.json` specifies:
 
 | Setting | Value |
 | --- | --- |
-| Install command | `python3 --version` |
-| Build command | `python3 scripts/fetch_snapshot.py` |
-| Output directory | `web` |
+| Install command | `npm ci --prefix frontend` |
+| Build command | `python3 scripts/build_site.py` |
+| Output directory | `dist` |
 | Python version | `3.12` |
 | Fluid compute | Enabled |
+
+The build verifies the pinned data release, regenerates the annual dashboard from
+that same snapshot, and compiles the React workspace. Each scheduled data-release
+commit therefore refreshes both the API and the dashboard. `web/data-status.json`
+is copied to `dist/data-status.json`, preserving the daily updater's verification.
+See [DESIGN_HISTORY.md](DESIGN_HISTORY.md) for the preserved classic design and
+instructions for reverting the frontend without reverting newer observations.
 
 The verified databases are approximately 4 GB combined and require Vercel Large
 Functions. Set `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` in Production and Preview.
