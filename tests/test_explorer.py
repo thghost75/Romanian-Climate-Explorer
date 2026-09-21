@@ -60,7 +60,12 @@ class ExplorerTests(unittest.TestCase):
         short="0-20000-0-15088"
         old=self.api.daily(short,7,15,"1961-1990")["variables"]["tmax_c"]
         self.assertFalse(old["eligible"]); self.assertIsNone(old["mean"])
-        h=self.api.history(SID,2026,"1991-2020")
+        # Use an actually incomplete historical year, not a current year that
+        # the daily updater will eventually finish.
+        incomplete_year=next(r[0] for r in self.api.products.db.execute(
+            "SELECT year,data_json FROM annual_summary WHERE station_id=? ORDER BY year",(SID,))
+            if not json.loads(r[1])["variables"]["precip_mm"]["eligible"])
+        h=self.api.history(SID,incomplete_year,"1991-2020")
         self.assertFalse(h["annual"]["variables"]["precip_mm"]["eligible"])
         self.assertIsNone(h["annual"]["variables"]["precip_mm"]["total"])
         self.assertTrue(any(s["incomplete"] for s in self.api.catalogue()))
@@ -108,7 +113,10 @@ class ExplorerTests(unittest.TestCase):
         self.assertEqual(data["days"][0]["date"],"2025-01-01")
         self.assertEqual(data["days"][-1]["date"],"2025-12-31")
         self.assertEqual(data["coverage"]["tmean_c"],365)
-        self.assertEqual(data["trace_days"],17)
+        expected_traces=self.api.source.execute(
+            "SELECT count(*) FROM daily_observations WHERE station_id=? AND date BETWEEN ? AND ? AND precip_trace=1",
+            ("0-20000-0-15420","2025-01-01","2025-12-31")).fetchone()[0]
+        self.assertEqual(data["trace_days"],expected_traces)
         self.assertEqual(len(self.api.daily_year(SID,2024,"1991-2020")["days"]),366)
         empty=self.api.daily_year("0-20000-0-15088",1800,"1961-1990")
         self.assertTrue(all(not d["source_present"] for d in empty["days"]))

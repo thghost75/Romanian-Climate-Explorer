@@ -103,7 +103,9 @@ def fetch(base_url=None, asset_dir=None, destination=None):
     token = os.environ.get('CLIMATE_GITHUB_TOKEN', '').strip() if asset_dir is None else ''
     private_assets = None
     if asset_dir is None:
-        base_url = (base_url or os.environ.get('CLIMATE_SNAPSHOT_BASE_URL', '')).rstrip('/')
+        # A committed release URL travels atomically with its matching checksums.
+        # The environment variable remains a fallback for the original snapshot.
+        base_url = (base_url or manifest.get('base_url') or os.environ.get('CLIMATE_SNAPSHOT_BASE_URL', '')).rstrip('/')
         parsed = urlparse(base_url)
         if parsed.scheme != 'https' or not parsed.netloc or parsed.query or parsed.fragment or parsed.username or parsed.password:
             raise ValueError('Set CLIMATE_SNAPSHOT_BASE_URL to an HTTPS release-download directory. See DEPLOY.md.')

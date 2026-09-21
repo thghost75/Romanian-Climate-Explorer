@@ -1,0 +1,57 @@
+name: Refresh daily ANM observations
+
+on:
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: daily-climate-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check updater before touching a snapshot
+        run: python -m unittest discover -s tests -v
+      - name: Download and verify the last published snapshot
+        env:
+          CLIMATE_GITHUB_TOKEN: ${{ github.token }}
+          CLIMATE_SNAPSHOT_BASE_URL: https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-2026-09-17
+        run: |
+          python scripts/fetch_snapshot.py
+          touch data/anm/.daily-refresh-workspace
+      - name: Refresh recent observations and affected station statistics
+        id: update
+        run: |
+          python scripts/refresh_daily.py --data-root data/anm
+          python - <<'PY'
+          import json, os
+          with open('data/anm/refresh-result.json') as stream:
+              result = json.load(stream)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('changed=' + str(result['changed']).lower() + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('## ANM daily check\n\n```json\n' + json.dumps(result, indent=2) + '\n```\n')
+          PY
+      - name: Validate the refreshed site and statistics
+        if: steps.update.outputs.changed == 'true'
+        run: python -m unittest discover -s tests -v
+      - name: Package checkpointed data with pinned checksums
+        if: steps.update.outputs.changed == 'true'
+        run: python scripts/package_snapshot.py --data-root data/anm --output release-assets
+      - name: Publish verified release and confirm the live Vercel deployment
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/publish_daily.py

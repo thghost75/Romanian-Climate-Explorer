@@ -1,5 +1,10 @@
 # Publish the repository, then deploy on Vercel
 
+The site is already deployed. Daily observation updates are configured by
+[DAILY_UPDATES.md](DAILY_UPDATES.md). The setup steps below document the initial
+deployment. Subsequent snapshots use the release URL committed in the manifest,
+which takes precedence over `CLIMATE_SNAPSHOT_BASE_URL`.
+
 ## 1. Put the source code on GitHub
 
 Use **only this `github-ready` folder** as the repository root. Do not publish

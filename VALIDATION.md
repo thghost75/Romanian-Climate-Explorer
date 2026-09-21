@@ -1,5 +1,14 @@
 # Local deployment preparation check
 
+## Daily refresh checks, 21 September 2026
+
+53 tests pass locally, including the existing API and immutable SQLite checks,
+the original climatology aggregation tests, daily source correction/record
+updates, transaction rollback on interrupted rebuilds, no-change detection,
+truncated source and future measurement rejection, pinned release URL selection,
+and uploaded-asset digest verification. The status JavaScript syntax check passes.
+The first scheduled-workflow execution is also run manually for cloud validation.
+
 Checked on 19 September 2026:
 
 - 27 tests passed: 14 climate API tests and 13 deployment/snapshot tests.

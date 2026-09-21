@@ -17,7 +17,8 @@ from urllib.request import urlopen
 from api.index import handler
 from anm_climate.explorer_api import readonly
 from anm_climate.phase3_api import ClimatologyStore
-from scripts.fetch_snapshot import HTTPSRedirectHandler, github_asset_urls, install_stream, snapshot_request
+from scripts.fetch_snapshot import HTTPSRedirectHandler, github_asset_urls, install_stream, snapshot_request, fetch
+from scripts.publish_daily import validate_remote_asset
 
 TEST_TMP = Path(__file__).resolve().parent / '_tmp'
 TEST_TMP.mkdir(exist_ok=True)
@@ -64,6 +65,29 @@ class SnapshotTests(unittest.TestCase):
     def test_valid_snapshot_is_installed_exactly(self):
         install_stream(io.BytesIO(gzip.compress(self.payload)), self.target, self.entry)
         self.assertEqual(self.target.read_bytes(), self.payload)
+
+    def test_committed_release_overrides_stale_environment_url(self):
+        project = Path(self.directory.name)
+        (project / 'snapshots').mkdir()
+        manifest = {'version': 1, 'base_url': 'https://github.com/o/r/releases/download/new', 'files': [
+            {'name': name, 'asset': name + '.gz', 'bytes': 10}
+            for name in ('climate.sqlite', 'climatology.sqlite')]}
+        (project / 'snapshots/manifest.json').write_text(json.dumps(manifest))
+        with patch('scripts.fetch_snapshot.PROJECT', project), patch.dict(os.environ, {
+            'CLIMATE_GITHUB_TOKEN': 'test-token',
+            'CLIMATE_SNAPSHOT_BASE_URL': 'https://github.com/o/r/releases/download/old'}), patch(
+                'scripts.fetch_snapshot.github_asset_urls', side_effect=RuntimeError('stop before download')) as resolve:
+            with self.assertRaisesRegex(RuntimeError, 'stop before download'):
+                fetch()
+        self.assertEqual(resolve.call_args.args[0], manifest['base_url'])
+
+    def test_remote_asset_digest_must_match_before_publication(self):
+        self.target.write_bytes(self.payload)
+        remote = {'state': 'uploaded', 'size': len(self.payload),
+                  'digest': 'sha256:' + hashlib.sha256(self.payload).hexdigest()}
+        validate_remote_asset(remote, self.target)
+        with self.assertRaisesRegex(ValueError, 'verification'):
+            validate_remote_asset({**remote, 'digest': 'sha256:bad'}, self.target)
 
     def test_corrupt_snapshot_preserves_existing_file_and_removes_partial(self):
         self.target.write_bytes(b'existing')

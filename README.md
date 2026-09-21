@@ -14,11 +14,9 @@ attachments**, not Git files. Vercel downloads and verifies them during its buil
 The repository remains private. Add a repository-scoped, read-only
 `CLIMATE_GITHUB_TOKEN` in Vercel as described in the deployment guide.
 
-This is prepared for deployment, not a claim that a live Vercel deployment has
-passed. It requires Vercel's **Large Functions beta** because the uncompressed
-snapshot is about 3.99 GB. Hobby is for personal, non-commercial use within its
-resource quotas. Account eligibility and actual deployed performance remain to
-be checked during your first deployment.
+The live site is https://romanian-climate-explorer.vercel.app/. It uses Vercel's
+**Large Functions beta** because the uncompressed snapshot is about 3.99 GB.
+The current deployment uses the Hobby plan within its resource quotas.
 
 ## Run locally
 
@@ -47,9 +45,10 @@ python -m anm_climate.explorer_server --data-root "E:\Codex\Weather Viewer\data\
 - `scripts/`: snapshot packaging and verified build-time download.
 - `tests/`: deployment tests and existing climate API tests.
 
-The original ingestion project, raw archives and protected backups are not part
-of this deployment repository. Only the files needed to run the explorer are
-included. Data stays outside `web/` and SQLite connections use read-only mode.
+The repository includes the selected original parser, downloader and statistics
+algorithms needed for daily updates. The original project, raw archive collection
+and protected backups remain separate. Data stays outside `web/`; the web API
+opens SQLite in read-only mode, and updates run in a separate Actions workspace.
 
 ## Checks
 
@@ -65,6 +64,13 @@ checks when databases are absent.
 
 ## Updating the data
 
+Daily cloud updates are configured in `.github/workflows/daily-refresh.yml`.
+Read **[DAILY_UPDATES.md](DAILY_UPDATES.md)** for the schedule, validation,
+credentials, limits and recovery instructions. New snapshot URLs are committed
+with their checksums, so routine updates do not require editing Vercel settings.
+
+For a separately reviewed manual historical refresh:
+
 Against a closed, checkpointed pair of databases, run:
 
 ```powershell
@@ -72,7 +78,7 @@ python scripts/package_snapshot.py --data-root "PATH_TO_DATA_ANM" --output ../re
 ```
 
 Commit the updated manifest and review notes, publish the new gzip files under a
-**new release tag**, update `CLIMATE_SNAPSHOT_BASE_URL` in Vercel, then redeploy.
+**new release tag**, set the matching `base_url` in the manifest, then commit and deploy.
 The downloader intentionally rejects data that does not match the committed
 checksums. Do not overwrite the contents of an existing tagged snapshot.
 
