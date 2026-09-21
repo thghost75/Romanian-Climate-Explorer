@@ -18,7 +18,7 @@ from api.index import handler
 from anm_climate.explorer_api import readonly
 from anm_climate.phase3_api import ClimatologyStore
 from scripts.fetch_snapshot import HTTPSRedirectHandler, github_asset_urls, install_stream, snapshot_request, fetch
-from scripts.publish_daily import validate_remote_asset
+from scripts.publish_daily import validate_remote_asset, publish
 
 TEST_TMP = Path(__file__).resolve().parent / '_tmp'
 TEST_TMP.mkdir(exist_ok=True)
@@ -88,6 +88,16 @@ class SnapshotTests(unittest.TestCase):
         validate_remote_asset(remote, self.target)
         with self.assertRaisesRegex(ValueError, 'verification'):
             validate_remote_asset({**remote, 'digest': 'sha256:bad'}, self.target)
+
+    def test_unchanged_source_still_requires_production_verification(self):
+        project = Path(self.directory.name)
+        (project / 'data/anm').mkdir(parents=True)
+        (project / 'web').mkdir()
+        (project / 'data/anm/refresh-result.json').write_text('{"changed": false}')
+        (project / 'web/data-status.json').write_text('{"release": "current-release"}')
+        with patch('scripts.publish_daily.PROJECT', project), patch('scripts.publish_daily.api') as remote:
+            self.assertEqual(publish(), 'current-release')
+        remote.assert_not_called()
 
     def test_corrupt_snapshot_preserves_existing_file_and_removes_partial(self):
         self.target.write_bytes(b'existing')

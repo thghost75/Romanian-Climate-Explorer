@@ -51,7 +51,6 @@ jobs:
         if: steps.update.outputs.changed == 'true'
         run: python scripts/package_snapshot.py --data-root data/anm --output release-assets
       - name: Publish verified release and confirm the live Vercel deployment
-        if: steps.update.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/publish_daily.py

@@ -23,7 +23,9 @@ Each run:
    through the existing Git integration. The run verifies the public production
    release, API health and station catalogue before reporting success.
 
-If nothing changed, no new release or deployment is made. A download, data-quality
+If nothing changed, no new release or deployment is made, but the existing
+production release is still checked so an earlier deployment failure cannot
+silently appear as a successful update. A download, data-quality
 or validation failure prevents publication and leaves the previous live snapshot
 in place. If a later Vercel build fails, its previous successful deployment stays
 live and the update workflow reports failure. The updater never force-pushes over

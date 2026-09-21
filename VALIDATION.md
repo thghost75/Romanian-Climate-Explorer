@@ -2,12 +2,19 @@
 
 ## Daily refresh checks, 21 September 2026
 
-53 tests pass locally, including the existing API and immutable SQLite checks,
+54 tests pass locally, including the existing API and immutable SQLite checks,
 the original climatology aggregation tests, daily source correction/record
 updates, transaction rollback on interrupted rebuilds, no-change detection,
 truncated source and future measurement rejection, pinned release URL selection,
 and uploaded-asset digest verification. The status JavaScript syntax check passes.
-The first scheduled-workflow execution is also run manually for cloud validation.
+The initial cloud execution checked 320 station/year archives, rebuilt all 160
+stations, passed database integrity checks and 53 tests against the updated real
+data, and published observations through 19 September 2026. The additional local
+test verifies that unchanged-source runs still require production verification.
+The first full cloud run succeeded:
+https://github.com/thghost75/Romanian-Climate-Explorer/actions/runs/35596170138
+Vercel automatically deployed its generated commit, and the job verified the
+public release marker, API health and all 160 stations before completing.
 
 Checked on 19 September 2026:
 

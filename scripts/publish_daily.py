@@ -40,8 +40,11 @@ def validate_remote_asset(remote, path):
 def publish():
     result = json.loads((PROJECT / 'data/anm/refresh-result.json').read_text())
     if not result['changed']:
-        print('No source changes; keeping the current release and deployment.')
-        return None
+        # A failed earlier Vercel build must not become a false-success daily
+        # run simply because ANM has no further observations yet.
+        status = json.loads((PROJECT / 'web/data-status.json').read_text())
+        print('No source changes; verifying the currently pinned production release.')
+        return status['release']
     repo = os.environ['GITHUB_REPOSITORY']
     if repo != 'thghost75/Romanian-Climate-Explorer':
         raise ValueError('Unexpected publishing repository')
@@ -111,10 +114,12 @@ def wait_for_production(tag, timeout=900):
                     health = json.load(response)
                 with urlopen(base + '/api/climate/stations', timeout=45) as response:
                     stations = json.load(response)
-                # The catalogue response is an object with a stations list.
+                # Support the direct catalogue list and an enveloped response.
                 catalogue = stations.get('stations', []) if isinstance(stations, dict) else stations
                 if not health.get('data_ready') or len(catalogue) != status['station_count']:
                     raise ValueError('Production snapshot health/catalogue validation failed')
+                if max(s.get('last_observation') or '' for s in catalogue) != status['latest_observation']:
+                    raise ValueError('Production observations do not match the published snapshot date')
                 print('Verified refreshed data on the public production site.', flush=True)
                 return
         except (OSError, ValueError):
