@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from anm_climate.explorer_api import Explorer, search_key
 from anm_climate.explorer_http import handle_climate
-from anm_climate.station_names import resolve_station_name
+from anm_climate.station_metadata import resolve_station_name, resolve_station_coordinates
 
 ROOT=Path(__file__).resolve().parents[1]/"data/anm"
 SID="0-20000-0-15085"
@@ -16,6 +16,15 @@ class StationNameTests(unittest.TestCase):
         self.assertEqual(resolve_station_name("0-20000-0-15465", "Updated official name"),
                          "Updated official name")
         self.assertIsNone(resolve_station_name("0-20000-0-99999", None))
+    def test_verified_coordinates_preserve_source_pairs_and_unknown_ids(self):
+        self.assertEqual(resolve_station_coordinates("0-20000-0-15465", None, None),
+                         (44.0292658083, 23.3312240839))
+        self.assertEqual(resolve_station_coordinates("0-20000-0-15465", 44.1, 23.4),
+                         (44.1, 23.4))
+        self.assertEqual(resolve_station_coordinates("0-20000-0-15465", 44.1, None),
+                         (44.1, None))
+        self.assertEqual(resolve_station_coordinates("0-20000-0-99999", None, None),
+                         (None, None))
 
 @unittest.skipUnless((ROOT/"climatology.sqlite").exists(),"Verified climate snapshot required")
 class ExplorerTests(unittest.TestCase):
@@ -25,7 +34,7 @@ class ExplorerTests(unittest.TestCase):
         self.assertEqual(len(self.api.catalogue()),160)
         self.assertEqual(self.api.catalogue("Bistrița"),self.api.catalogue("Bistrita"))
         self.assertEqual(self.api.catalogue(SID)[0]["station_id"],SID)
-        self.assertEqual(sum(s["has_coordinates"] for s in self.api.catalogue()),140)
+        self.assertEqual(sum(s["has_coordinates"] for s in self.api.catalogue()),160)
     def test_missing_names_are_searchable_and_used_in_calendar_records(self):
         self.assertTrue(all(s["station_name"] for s in self.api.catalogue()))
         self.assertEqual([s["station_id"] for s in self.api.catalogue("Băilești")],
@@ -126,6 +135,10 @@ class ExplorerTests(unittest.TestCase):
         self.assertTrue(all(d.endswith("02-29") for r in result["records"] for d in r["dates"]))
         result=self.api.map_values("temperature",7,15,"1991-2020",2024)
         self.assertEqual(len(result["stations"]),160)
+        self.assertTrue(all(s["has_coordinates"] for s in result["stations"]))
+        bailesti=next(s for s in result["stations"] if s["station_id"]=="0-20000-0-15465")
+        self.assertEqual((bailesti["latitude"],bailesti["longitude"]),
+                         (44.0292658083,23.3312240839))
     def test_daily_year_complete_leap_and_missing_days(self):
         data=self.api.daily_year("0-20000-0-15420",2025,"1991-2020")
         self.assertEqual(len(data["days"]),365)

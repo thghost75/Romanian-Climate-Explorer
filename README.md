@@ -90,10 +90,12 @@ Weather observations: Administrația Națională de Meteorologie (ANM),
 [MeteoRomania Open Data Portal](https://odp.meteoromania.ro/station_data_series/climate/daily/).
 WxProbs chart branding does not replace the underlying dataset attribution.
 
-The 20 station names absent from the ANM locations catalogue are supplemented by
+The names and coordinates of 20 stations absent from the ANM locations catalogue are supplemented by
 exact WIGOS matches from [WMO OSCAR/Surface](https://oscar.wmo.int/surface/rest/api/search/station?territoryName=ROU),
-verified on 21 September 2026. These names are stored in
-`anm_climate/station_names.py` and applied to the shared API catalogue, including
-search, calendar records and exports. Existing ANM names take precedence. The
-fallbacks persist across daily data refreshes; observation data and coordinates
-are unchanged.
+verified on 21 September 2026. These verified metadata fallbacks are stored in
+`anm_climate/station_metadata.py` and applied to the shared API catalogue, including
+search, map markers, calendar records and exports. Existing ANM names and
+coordinate pairs take precedence. The fallbacks persist across daily data
+refreshes. WMO coordinates describe registry locations, not historical station
+relocations; observation data is unchanged. Map counts and availability messages
+are calculated from the catalogue rather than fixed in the interface.

@@ -13,7 +13,7 @@ from pathlib import Path
 from .config import DEFAULT_ROOT, readonly_uri
 from .phase3_api import ClimatologyStore
 from .phase3_policy import PERIODS, VARIABLES, CALENDAR
-from .station_names import resolve_station_name
+from .station_metadata import resolve_station_name, resolve_station_coordinates
 
 RECORD_VARIABLES = {
     "highest_tmax": "tmax_c", "lowest_tmin": "tmin_c",
@@ -48,6 +48,8 @@ class Explorer:
             "missing_years FROM stations")}
         for sid, station in self.stations.items():
             station["station_name"] = resolve_station_name(sid, station["station_name"])
+            station["latitude"], station["longitude"] = resolve_station_coordinates(
+                sid, station["latitude"], station["longitude"])
     def quality(self,station):
         self.station(station)
         return {"station_id":station,"variables":[dict(r) for r in self.products.db.execute(
