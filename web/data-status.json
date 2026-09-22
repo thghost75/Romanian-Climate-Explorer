@@ -1,7 +1,7 @@
 {
-  "release": "climate-auto-35708939392-1",
-  "updated_at": "2026-09-22T09:24:44.058665+00:00",
-  "latest_observation": "2026-09-20",
+  "release": "climate-auto-35770011816-1",
+  "updated_at": "2026-09-22T19:05:41.583613+00:00",
+  "latest_observation": "2026-09-21",
   "station_count": 160,
   "schedule": "Daily at 03:17, 09:17, 15:17 and 21:17 UTC"
 }
