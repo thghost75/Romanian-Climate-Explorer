@@ -11,5 +11,5 @@ await mkdir('../dist',{recursive:true});
 await writeFile('../dist/'+script,js);
 await writeFile('../dist/'+styles,css);
 await writeFile('../dist/index.html',`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore Romania's weather archive: 160 stations, daily records, historic events, climate comparisons and interactive charts by WxProbs."><meta name="wxprobs-design" content="workspace-2026-09"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'"><title>Romanian Climate Explorer · WxProbs</title><link rel="icon" href="/favicon.svg"><script>${themeInit}</script><link rel="stylesheet" href="/${styles}"></head><body><div id="root"></div><noscript>This explorer needs JavaScript to display station maps and weather charts.</noscript><script src="/${script}" defer></script></body></html>`);
-for(const name of ['favicon.svg','data-status.json'])await copyFile('../web/'+name,'../dist/'+name);
+for(const name of ['favicon.svg','data-status.json','rce-logo.png'])await copyFile('../web/'+name,'../dist/'+name);
 console.log('Built the WxProbs production workspace in dist/.');

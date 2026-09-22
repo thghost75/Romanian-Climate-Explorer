@@ -98,3 +98,11 @@
 [data-theme=light] .ce-daily-svg line[stroke="#36515f"]{stroke:#d3e0e8}
 @media(max-width:900px){.theme-toggle span{display:none}.theme-toggle{width:40px;padding:8px}.topbar{gap:10px}}
 @media(max-width:400px){.topbar{padding:0 12px}.brand strong{font-size:12px}.brand div>span{letter-spacing:0}.brand{gap:7px}.top-actions{gap:6px}}
+
+/* Keep the complete supplied wordmark readable without crowding header actions. */
+.topbar{height:96px}
+.brand{flex:0 1 260px;min-width:0}
+.brand-logo{display:block;width:100%;height:auto;max-height:88px;object-fit:contain;object-position:left center}
+.top-actions{flex-shrink:0}
+.sidebar{height:calc(100vh - 96px)}
+@media(max-width:640px){.topbar{height:88px}.brand{flex-basis:240px}.brand-logo{max-height:80px}.sidebar{height:auto}}
