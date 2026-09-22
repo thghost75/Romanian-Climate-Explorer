@@ -75,3 +75,16 @@ The computer running this local project is not needed for hosting or updates.
 - [Vercel Large Functions](https://vercel.com/docs/functions/limitations)
 - [Vercel environment variables](https://vercel.com/docs/environment-variables/managing-environment-variables)
 - [GitHub scheduled workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+
+## Automatic refresh schedule
+
+ANM is checked at **03:17, 09:17, 15:17 and 21:17 UTC** each day (06:17,
+12:17, 18:17 and 00:17 in Romania during summer time). GitHub may delay or miss
+an individual scheduled event; the later checks provide another attempt.
+Each run downloads the current pinned release, checks the source, and publishes
+only after validation. Production is verified before the run can succeed.
+The workflow uses GitHub's short-lived built-in token, with no personal token to
+renew. Its run summary and retained refresh diagnostics show the check time and
+latest observation separately. Empty source days are not fabricated or marked
+as imported. Inspect **Actions > Refresh daily ANM observations** for history.
+Manual dispatch remains available for maintenance, but is not the normal updater.

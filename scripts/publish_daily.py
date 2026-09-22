@@ -51,7 +51,9 @@ def publish():
     base = 'https://api.github.com/repos/' + repo
     if api(base)['full_name'] != repo:
         raise ValueError('Publishing repository identity did not match')
-    expected = os.environ['GITHUB_SHA']
+    # Queued scheduled runs check out current main, which can be newer than
+    # the commit recorded when GitHub originally created the event.
+    expected = git('rev-parse', 'HEAD')
     git('fetch', 'origin', 'main')
     if git('rev-parse', 'origin/main') != expected or git('rev-parse', 'HEAD') != expected:
         raise ValueError('Main changed while updating; rerun against the new version')
@@ -88,7 +90,7 @@ def publish():
     manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     public_status = {'release': tag, 'updated_at': result['checked_at'],
                      'latest_observation': result['latest_observation'],
-                     'station_count': result['station_count'], 'schedule': 'Daily at 05:23 UTC'}
+                     'station_count': result['station_count'], 'schedule': 'Daily at 03:17, 09:17, 15:17 and 21:17 UTC'}
     (PROJECT / 'web/data-status.json').write_text(json.dumps(public_status, indent=2) + '\n', encoding='utf-8')
     # Attribute this user's scheduled automation to the repository owner so the
     # existing Vercel Hobby Git integration can recognize its authorized author.
