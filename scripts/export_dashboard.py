@@ -14,7 +14,7 @@ def export(data_root=None, output=None):
         catalogue=explorer.catalogue()
         latest=max(s['last_observation'] for s in catalogue)
         last_year=min(date.today().year-1,int(latest[:4])-(latest[5:]!='12-31'))
-        first_year=1961
+        first_year=min(int(s['first_observation'][:4]) for s in catalogue)
         stations=[]
         def rounded(value):return round(value,4) if value is not None else None
         for station in catalogue:

@@ -2,6 +2,7 @@
 from contextlib import nullcontext
 from datetime import date
 import json
+import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,6 +11,29 @@ from unittest.mock import Mock, patch
 from scripts.export_dashboard import export
 
 class DashboardExportTests(unittest.TestCase):
+    def test_full_archive_keeps_nineteenth_century_rainfall_and_missing_temperature(self):
+        explorer=Mock()
+        explorer.catalogue.return_value=[{'station_id':'arad','station_name':'Arad','latitude':46,'longitude':21,
+            'first_observation':'1871-01-01','last_observation':'2026-09-20','completeness_percent':90}]
+        explorer.products.policy={'normal':'1991-2020'}
+        with sqlite3.connect(':memory:') as database, tempfile.TemporaryDirectory() as directory:
+            database.row_factory=sqlite3.Row
+            database.execute('CREATE TABLE annual_summary (station_id TEXT, year INTEGER, data_json TEXT)')
+            for year in (1871,1961,2025,2026):
+                database.execute('INSERT INTO annual_summary VALUES (?,?,?)',('arad',year,json.dumps({'variables':{
+                    'tmean_c':{'eligible':False,'mean':None,'anomaly':None},
+                    'precip_mm':{'eligible':True,'total':810.4,'anomaly':204.3066667}}})))
+            explorer.products.db=database
+            output=Path(directory)/'dashboard.json'
+            with patch('scripts.export_dashboard.Explorer',return_value=nullcontext(explorer)), patch('scripts.export_dashboard.date') as clock:
+                clock.today.return_value=date(2026,9,22)
+                result=export(output=output)
+            self.assertEqual(result['firstYear'],1871)
+            self.assertEqual(result['lastYear'],2025)
+            history=json.loads(output.read_text(encoding='utf-8'))['stations'][0]['history']
+            self.assertEqual([row['year'] for row in history],[1871,1961,2025])
+            self.assertEqual(history[0],{'year':1871,'temp':None,'tempAnomaly':None,'rain':810.4,'rainAnomaly':204.3067})
+
     def test_snapshot_date_drives_last_full_year_and_ineligible_values_stay_missing(self):
         station={'station_id':'test-station','station_name':'Test station','latitude':44.0,'longitude':26.0,
                  'first_observation':'1961-01-01','last_observation':'2027-02-01','completeness_percent':90}
