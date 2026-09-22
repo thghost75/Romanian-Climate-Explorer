@@ -198,6 +198,14 @@ class RoutingTests(unittest.TestCase):
                 self.assertEqual(status, 200)
                 self.assertEqual(body, {'path': '/api/climate/overview', 'query': 'station=ABC&year=2025'})
 
+    def test_vercel_reads_compact_runtime_snapshot(self):
+        def fake(h, path, query, root):
+            h.json_response(200, {'folder': root.name})
+        with patch.dict(os.environ, {'VERCEL': '1'}), patch('api.index.handle_climate', fake):
+            with patch.dict(os.environ):
+                os.environ.pop('CLIMATE_DATA_ROOT', None)
+                self.assertEqual(self.request('/api/climate/stations'), (200, {'folder': 'runtime'}))
+
     def test_ambiguous_or_invalid_routes_are_rejected(self):
         for path in ['/api?__climate_endpoint=a&__climate_endpoint=b',
                      '/api/climate/stations?__climate_endpoint=overview',

@@ -8,8 +8,8 @@
   "functions": {
     "api/index.py": {
       "maxDuration": 300,
-      "includeFiles": "{anm_climate/**,data/anm/**}",
-      "excludeFiles": "{web/**,dist/**,frontend/**,node_modules/**,tests/**,scripts/**,snapshots/**,.github/**,**/__pycache__/**,*.md,*.cmd}"
+      "includeFiles": "{anm_climate/**,data/runtime/climate.sqlite,data/runtime/climatology.sqlite,data/runtime/processed/phase3/candidate_review_notes.json}",
+      "excludeFiles": "{data/anm/**,data/runtime-build-*/**,release-assets/**,web/**,dist/**,frontend/**,node_modules/**,tests/**,scripts/**,snapshots/**,.github/**,**/__pycache__/**,**/*.sqlite-wal,**/*.sqlite-shm,**/*.part,*.md,*.cmd}"
     }
   },
   "rewrites": [

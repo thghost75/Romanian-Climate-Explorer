@@ -24,8 +24,10 @@ is copied to `dist/data-status.json`, preserving the daily updater's verificatio
 See [DESIGN_HISTORY.md](DESIGN_HISTORY.md) for the preserved classic design and
 instructions for reverting the frontend without reverting newer observations.
 
-The verified databases are approximately 4 GB combined and require Vercel Large
-Functions. Set `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` in Production and Preview.
+The complete verified archive is approximately 4 GB. Each build creates a compact
+serving copy (approximately 2.2 GB at the September 2026 snapshot) and bundles only
+that copy. It still requires Vercel Large Functions.
+Set `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` in Production and Preview.
 If the importer disables that field, add it in the project's Environment Variables
 settings after import, then redeploy.
 
@@ -49,9 +51,30 @@ The build logs must show both `SHA-256 verified` messages and
 - `/data-status.json` identifies the published release and latest observation.
 - Daily charts and PNG/SVG downloads work and retain **© WxProbs** and ANM attribution.
 
-The databases are opened using immutable SQLite connections on Vercel. They stay
+The serving databases are opened using immutable SQLite connections on Vercel. They stay
 outside `web/` and are never exposed through the web API as database files. Their
-release attachments are intentionally downloadable from the public GitHub repo.
+complete archive release attachments are intentionally downloadable from the public GitHub repo.
+
+## Automatic deployment cleanup
+
+`scripts/prepare_runtime.py` creates fresh databases in `data/runtime` from the
+verified `data/anm` archive on every build. It retains all dates and measurements,
+the QC flags, review notes, displayed source references, and every statistical
+table read by the public API. Ingestion logs, source-file preambles, duplicate raw
+text, build-only threshold tables, and ingestion-only indexes stay in the full
+archive and are omitted from the serving copy. No historical years are pruned.
+
+The build verifies copied row counts and SQLite integrity, reports bytes saved,
+and fails before deployment if serving data reaches 4.5 GB. Vercel's function
+configuration includes only the two serving databases and review notes, excluding
+the full source archive, staging directories, SQLite sidecars and temporary files.
+Frontend builds also remove obsolete hashed JavaScript/CSS files from `dist`.
+Run `python scripts/prepare_runtime.py` followed by the test suite to compare
+public API responses with the complete local archive.
+
+Keep the pinned GitHub data release and the classic-design rollback tag. Old
+release attachments are not bundled into the Vercel function. This cleanup reduces
+deployment size; traffic, compute and build-usage quotas are separate limits.
 
 ## Troubleshooting
 
@@ -59,8 +82,9 @@ release attachments are intentionally downloadable from the public GitHub repo.
   two attachments are available publicly; draft releases are not public.
 - **Checksum mismatch:** the release and manifest must come from the same packaging
   run. Do not overwrite old tagged assets.
-- **Function too large:** check Large Functions is enabled. The packaging guard
-  stops snapshots at 4.8 GB to leave space in the 5 GB function.
+- **Function too large:** check Large Functions is enabled and `data/anm` is
+  excluded. The serving-copy guard stops at 4.5 GB to leave room in the 5 GB
+  function. The complete release archive has a separate 4.8 GB packaging guard.
 - **API 503:** inspect build logs and function data inclusion. Never move SQLite
   files into `web/` as a workaround.
 - **Daily update failure:** inspect its Actions run; data checks must pass before

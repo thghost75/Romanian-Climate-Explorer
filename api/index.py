@@ -49,7 +49,8 @@ class handler(BaseHTTPRequestHandler):
                     or (routed and routed[0] != endpoint)
                     or (captured and captured[0] != endpoint)):
                 raise ValueError('Invalid endpoint')
-            root = Path(os.environ.get('CLIMATE_DATA_ROOT', str(DEFAULT_ROOT)))
+            serving_root = DEFAULT_ROOT.parent / 'runtime' if os.environ.get('VERCEL') == '1' else DEFAULT_ROOT
+            root = Path(os.environ.get('CLIMATE_DATA_ROOT', str(serving_root)))
             if endpoint == 'health':
                 ready = all((root / name).is_file() for name in REQUIRED_FILES)
                 if ready:

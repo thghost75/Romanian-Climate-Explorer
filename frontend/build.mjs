@@ -1,5 +1,5 @@
 import {build} from 'esbuild';
-import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,copyFile,readdir,unlink} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const result=await build({entryPoints:['src/App.tsx'],bundle:true,minify:true,format:'iife',target:'es2022',write:false,define:{'process.env.NODE_ENV':'"production"'}});
 const js=result.outputFiles[0].text;
@@ -12,4 +12,8 @@ await writeFile('../dist/'+script,js);
 await writeFile('../dist/'+styles,css);
 await writeFile('../dist/index.html',`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore Romania's weather archive: 160 stations, daily records, historic events, climate comparisons and interactive charts by WxProbs."><meta name="wxprobs-design" content="workspace-2026-09"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'"><title>Romanian Climate Explorer · WxProbs</title><link rel="icon" type="image/png" href="/favicon.png"><script>${themeInit}</script><link rel="stylesheet" href="/${styles}"></head><body><div id="root"></div><noscript>This explorer needs JavaScript to display station maps and weather charts.</noscript><script src="/${script}" defer></script></body></html>`);
 for(const name of ['favicon.png','data-status.json','rce-logo.png'])await copyFile('../web/'+name,'../dist/'+name);
+// Cached builds must not accumulate obsolete hashed bundles.
+for(const name of await readdir('../dist')){
+  if(/^workspace-[a-f0-9]{12}\.(js|css)$/.test(name)&&name!==script&&name!==styles)await unlink('../dist/'+name);
+}
 console.log('Built the WxProbs production workspace in dist/.');
