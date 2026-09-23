@@ -32,6 +32,9 @@ class RuntimeSnapshotTests(unittest.TestCase):
             db.commit()
         with closing(sqlite3.connect(self.source / 'climatology.sqlite')) as db:
             for table in PRODUCT_TABLES:
+                if table == 'qc_exclusions':
+                    db.execute('CREATE TABLE qc_exclusions (station_id,date,variable,reason)')
+                    continue
                 db.execute(f'CREATE TABLE {table} (id TEXT PRIMARY KEY, value TEXT)')
                 db.execute(f'INSERT INTO {table} VALUES (?,?)', ('test','unchanged data'))
             db.execute('CREATE INDEX event_value ON precipitation_events(value)')
@@ -49,6 +52,9 @@ class RuntimeSnapshotTests(unittest.TestCase):
             self.assertEqual({r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")},{'stations','daily_observations'})
         with closing(sqlite3.connect(self.destination / 'climatology.sqlite')) as db:
             for table in PRODUCT_TABLES:
+                if table == 'qc_exclusions':
+                    self.assertEqual(db.execute('SELECT * FROM qc_exclusions').fetchall(), [])
+                    continue
                 self.assertEqual(db.execute(f'SELECT * FROM {table}').fetchone(),('test','unchanged data'))
             self.assertIsNotNone(db.execute("SELECT name FROM sqlite_master WHERE name='event_value'").fetchone())
             self.assertIsNone(db.execute("SELECT name FROM sqlite_master WHERE name='window_thresholds'").fetchone())

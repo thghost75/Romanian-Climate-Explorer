@@ -5,6 +5,10 @@ from pathlib import Path
 import shutil
 import sqlite3
 import tempfile
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from anm_climate.national_records import build_index
 
 PROJECT = Path(__file__).resolve().parents[1]
 MAX_RUNTIME_BYTES = 4_500_000_000  # Leave room for the Python runtime below 5 GB.
@@ -73,6 +77,9 @@ def prepare(source=None, destination=None):
         print('Preparing compact serving databases; full archive retained.', flush=True)
         copy_database(source / names[0], staging / names[0], ('stations', 'daily_observations'), True)
         copy_database(source / names[1], staging / names[1], PRODUCT_TABLES)
+        with closing(sqlite3.connect(staging / names[0])) as observations, closing(sqlite3.connect(staging / names[1])) as products:
+            print('Preparing compact national record summaries.', flush=True)
+            build_index(observations, products)
         notes = (source / NOTES).read_bytes()
         runtime_bytes = sum((staging / name).stat().st_size for name in names) + len(notes)
         if runtime_bytes >= MAX_RUNTIME_BYTES:

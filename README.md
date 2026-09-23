@@ -64,6 +64,17 @@ checks when databases are absent.
 
 ## Updating the data
 
+Records can be viewed for one station or across Romania, by calendar day,
+calendar month, specific month/year, year, or all available years. National
+records retain every tied station/date, variable-specific quality exclusions,
+source details and CSV exports. They describe extremes in the available archive;
+station coverage varies over time.
+
+Each deployment rebuilds a compact `national_records` table in the serving
+database from the verified observations and QC exclusions. This adds about 2.4 MB
+of summaries and avoids scanning the archive on visitor requests. The full source
+archive remains unchanged; national summaries refresh with automatic deployments.
+
 Daily cloud updates are configured in `.github/workflows/daily-refresh.yml`.
 Read **[DAILY_UPDATES.md](DAILY_UPDATES.md)** for the schedule, validation,
 credentials, limits and recovery instructions. New snapshot URLs are committed

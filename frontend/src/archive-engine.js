@@ -8,7 +8,7 @@ const unit={tmean_c:"°C",tmin_c:"°C",tmax_c:"°C",precip_mm:"mm",wind_mean_ms:
 const names={tmean_c:"Mean temperature",tmin_c:"Minimum temperature",tmax_c:"Maximum temperature",precip_mm:"Precipitation",wind_mean_ms:"Mean wind",pressure_msl_hpa:"Sea-level pressure"};
 const recordNames={highest_tmax:"Highest Tmax",lowest_tmin:"Lowest Tmin",lowest_tmax:"Lowest Tmax",highest_tmin:"Highest Tmin",highest_tmean:"Highest Tmean",lowest_tmean:"Lowest Tmean",highest_precip:"Wettest day",highest_mean_wind:"Highest mean wind",highest_pressure:"Highest pressure",lowest_pressure:"Lowest pressure"};
 const recordVars={highest_tmax:"tmax_c",lowest_tmin:"tmin_c",lowest_tmax:"tmax_c",highest_tmin:"tmin_c",highest_tmean:"tmean_c",lowest_tmean:"tmean_c",highest_precip:"precip_mm",highest_mean_wind:"wind_mean_ms",highest_pressure:"pressure_msl_hpa",lowest_pressure:"pressure_msl_hpa"};
-const today=new Date(),state={station:"0-20000-0-15085",normal:"1991-2020",month:today.getMonth()+1,day:today.getDate(),year:today.getFullYear()-1,tab:"overview",recordScope:"day",mode:"stations",catalogue:[],boundary:null};
+const today=new Date(),state={station:"0-20000-0-15085",normal:"1991-2020",month:today.getMonth()+1,day:today.getDate(),year:today.getFullYear()-1,tab:"overview",recordScope:"day",recordArea:"station",nationalYear:null,mode:"stations",catalogue:[],boundary:null};
 let serial=0,mapSerial=0;const cache=new Map(),API="";
 async function api(endpoint,params={}){
  const url=API+"/api/climate/"+endpoint+"?"+new URLSearchParams(params);
@@ -113,9 +113,9 @@ function modal(title,body){
  const close=()=>{wrap.remove();previous?.focus();};wrap.querySelector("button").onclick=close;wrap.onclick=e=>{if(e.target===wrap)close();};
  wrap.onkeydown=e=>{if(e.key==="Escape")close();if(e.key==="Tab"){const f=[...wrap.querySelectorAll('button,a,input,select,summary,[tabindex="0"]')];if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===f.at(-1)){e.preventDefault();f[0].focus();}}};wrap.querySelector("button").focus();return wrap.querySelector(".ce-modal-body");
 }
-function recordDetails(r,label){
- const rows=(r.observations||[]).map(o=>[E(o.date),E(fmt(o.value)),o.quality_flags?.length?E(JSON.stringify(o.quality_flags)):"None",E((o.verification_notes||[]).map(n=>n.review_reason).join("; ")||"None"),E(o.source_member+":"+o.source_line)]);
- modal(label+" · all tied dates",'<p>Variable-level QC applies. Flags on other variables remain visible without automatically invalidating this value.</p>'+table(["Date","Value","Original flags","Verification notes","Source"],rows));
+function recordDetails(r,label,national=false){
+ const rows=(r.observations||[]).map(o=>[...(national?[E(o.station_name)+'<div class="ce-muted">'+E(o.station_id)+'</div>']:[]),E(o.date),E(fmt(o.value)),o.quality_flags?.length?E(JSON.stringify(o.quality_flags)):"None",E((o.verification_notes||[]).map(n=>n.review_reason).join("; ")||"None"),E(o.source_member+":"+o.source_line)]);
+ modal(label+" · all tied dates",'<p>Variable-level QC applies. Flags on other variables remain visible without automatically invalidating this value.</p>'+table([...(national?["Station"]:[]),"Date","Value","Original flags","Verification notes","Source"],rows));
 }
 async function eventDetails(r){
  const node=modal("Event observations",'<p>Loading observations…</p>');
@@ -137,6 +137,9 @@ const help='<details class="ce-help"><summary>How to read these climate statisti
 
  const $=id=>host.querySelector("#"+id);
 function stationTitle(){
+ if(state.tab==='records'&&state.recordArea==='national'){
+  $("ce-station-title").innerHTML='<div class="ce-heading"><div><div class="ce-eyebrow">All archive stations</div><h2>Romania · national records</h2><p class="ce-small ce-muted">Extremes across the available station network · every tied station and date retained</p></div></div>';return;
+ }
  const s=state.catalogue.find(s=>s.station_id===state.station);if(!s)return;
  $("ce-station-title").innerHTML='<div class="ce-heading"><div><div class="ce-eyebrow">'+E(s.station_id)+'</div><h2>'+E(s.station_name||"Station name unavailable")+'</h2><p class="ce-small ce-muted">'+(s.has_coordinates?E(fmt(s.latitude,3)+"°N · "+fmt(s.longitude,3)+"°E"):"Official coordinates unavailable")+" · Elevation "+(s.elevation_m===null?"unavailable":E(fmt(s.elevation_m,0))+" m")+'</p></div><div class="ce-small ce-station-meta">'+E(s.first_observation)+" → "+E(s.last_observation)+'<br>'+E(fmt(s.observation_days,0))+' observed days · '+E(fmt(s.completeness_percent))+'% coverage '+(s.incomplete?'<span class="ce-badge">Incomplete record</span>':"")+'<br><strong>Selected normal '+E(state.normal)+'</strong><br><button id="ce-quality">Data quality details</button></div></div>';
  $("ce-quality").onclick=async()=>{const target=modal("Station data quality","Loading quality counts…");try{const q=await api("quality",{station:state.station});target.innerHTML='<p>'+E(q.policy)+'</p>'+table(["Variable","Eligible values","Missing","Excluded values"],q.variables.map(v=>[E(names[v.variable]),E(v.eligible_count),E(v.missing_count),E(v.excluded_count)]))+(q.verification_notes.length?q.verification_notes.map(n=>'<p class="ce-warning">'+E(n.start_date+' → '+n.end_date+': '+n.review_reason)+'</p>').join(''):'<p>No additional historical verification note has been recorded. This is not a certification of all source measurements.</p>');}catch(e){failure(target,e);}};
@@ -145,8 +148,8 @@ async function renderTab(){
  const request=++serial;stationTitle();host.querySelectorAll("[data-tab]").forEach(b=>{b.classList.toggle("active",b.dataset.tab===state.tab);b.setAttribute("aria-current",b.dataset.tab===state.tab?"page":"false");});
  const content=$("ce-content");content.dataset.ready="false";content.innerHTML='<p class="ce-status" role="status">Loading '+E(state.tab)+'…</p>';
  try{
- const endpoint={overview:"overview",records:"records",temperature:"temperature",rainfall:"rainfall",extremes:"events",history:"history"}[state.tab];
- const extra=state.tab==="extremes"?{kind:"heatwave",start:(state.year-4)+"-01-01",end:state.year+"-12-31"}:state.tab==="records"?{scope:state.recordScope}:{};
+ const endpoint={overview:"overview",records:state.recordArea==="national"?"national-records":"records",temperature:"temperature",rainfall:"rainfall",extremes:"events",history:"history"}[state.tab];
+ const extra=state.tab==="extremes"?{kind:"heatwave",start:(state.year-4)+"-01-01",end:state.year+"-12-31"}:state.tab==="records"?{scope:state.recordScope,...(state.recordArea==="national"?{year:state.nationalYear??state.year}:{})}:{};
  const data=await api(endpoint,{...params(),...extra});if(request!==serial)return;
  await ({overview:renderOverview,records:renderRecords,temperature:renderTemperature,rainfall:renderRainfall,extremes:renderExtremes,history:renderHistory}[state.tab])(content,data);
  if(request===serial){Object.assign(content.dataset,{ready:"true",station:state.station,normal:state.normal,tab:state.tab,year:String(state.year)});}
@@ -165,18 +168,35 @@ function renderOverview(node,d){
  node.querySelectorAll("[data-record]").forEach(b=>b.onclick=()=>recordDetails(records[b.dataset.record],recordNames[b.dataset.record]));
 }
 function renderRecords(node,d){
+ const national=d.area==='national';
  const station=state.catalogue.find(s=>s.station_id===state.station);
+ const first=national?d.first_year:station.first_year,last=national?d.last_year:station.last_year;
+ const recordYear=national?(state.nationalYear??state.year):state.year;
  const yearly=['year','month-year'].includes(state.recordScope);
- const scopes=[['day','Calendar day · all years'],['month','Calendar month · all years'],['month-year','Month in a selected year'],['year','Selected year'],['all','All-time station records']];
- node.innerHTML='<div class="ce-controls"><label>Record scope<select id="ce-record-scope" aria-label="Record scope">'+scopes.map(([value,label])=>'<option value="'+value+'"'+(value===state.recordScope?' selected':'')+'>'+label+'</option>').join('')+'</select></label>'+
- (yearly?'<label>Record year<input id="ce-record-year" type="number" min="'+station.first_year+'" max="'+station.last_year+'" value="'+state.year+'"></label><button id="ce-record-load">View records</button>':'')+
+ const scopes=[['day','Calendar day · all years'],['month','Calendar month · all years'],['month-year','Month in a selected year'],['year','Selected year'],['all','All-time records']];
+ node.innerHTML='<div class="ce-controls"><label>Record area<select id="ce-record-area" aria-label="Record area"><option value="station"'+(!national?' selected':'')+'>Selected station</option><option value="national"'+(national?' selected':'')+'>Romania · all stations</option></select></label><label>Record scope<select id="ce-record-scope" aria-label="Record scope">'+scopes.map(([value,label])=>'<option value="'+value+'"'+(value===state.recordScope?' selected':'')+'>'+label+'</option>').join('')+'</select></label>'+
+ (yearly?'<label>Record year<input id="ce-record-year" type="number" min="'+first+'" max="'+last+'" value="'+recordYear+'"></label><button id="ce-record-load">View records</button>':'')+
  '<button id="ce-record-export">Export records CSV</button></div><div id="ce-record-table"></div>';
- node.querySelector("#ce-record-table").innerHTML=panel("Historical records · "+d.period_label,'<p class="ce-small ce-muted">'+E(d.qc_policy)+'</p><p class="ce-small ce-muted">Lowest Tmax is the coldest daily maximum; highest Tmin is the warmest daily minimum. Values are daily extremes within the selected period.</p>'+table(["Record","Value","Sample (days)","All tied dates","Quality"],Object.entries(d.records).map(([k,r])=>[E(recordNames[k]),E(r.value==null?'No data':fmt(r.value)+' '+unit[recordVars[k]]),E(r.sample_count),r.dates.length?'<button data-record="'+k+'">'+r.dates.length+' date'+(r.dates.length===1?'':'s')+' · inspect</button><div class="ce-muted">'+E(r.dates.slice(0,2).join(' · '))+(r.dates.length>2?' …':'')+'</div>':'—',r.value==null?'No eligible observations':warn(r)||'Eligible'])));
- node.querySelectorAll('[data-record]').forEach(b=>b.onclick=()=>recordDetails(d.records[b.dataset.record],recordNames[b.dataset.record]));
+ const holderCell=(k,r)=>{
+  if(!r.dates.length)return '—';
+  const entries=national?r.observations.map(o=>o.station_name+' · '+o.date):r.dates;
+  return '<button data-record="'+k+'">'+entries.length+' '+(national?'station/date result':'date')+(entries.length===1?'':'s')+' · inspect</button><div class="ce-muted">'+E(entries.slice(0,2).join(' · '))+(entries.length>2?' …':'')+'</div>';
+ };
+ node.querySelector('#ce-record-table').innerHTML=panel((national?'National records · ':'Historical records · ')+d.period_label,
+  (national?'<p class="ce-small">'+E(d.station_count)+' of '+E(d.network_station_count)+' stations contribute eligible observations for this period.</p>':'')+
+  '<p class="ce-small ce-muted">'+E(d.qc_policy)+'</p><p class="ce-small ce-muted">Lowest Tmax is the coldest daily maximum; highest Tmin is the warmest daily minimum. Values are daily extremes within the selected period.</p>'+
+  table(['Record','Value',national?'Sample (station-days)':'Sample (days)',national?'Tied stations & dates':'All tied dates','Quality'],Object.entries(d.records).map(([k,r])=>[E(recordNames[k]),E(r.value==null?'No data':fmt(r.value)+' '+unit[recordVars[k]]),E(r.sample_count),holderCell(k,r),r.value==null?'No eligible observations':warn(r)||'Eligible'])));
+ node.querySelectorAll('[data-record]').forEach(b=>b.onclick=()=>recordDetails(d.records[b.dataset.record],recordNames[b.dataset.record],national));
+ node.querySelector('#ce-record-area').onchange=e=>{state.recordArea=e.target.value;onChange({recordArea:state.recordArea});void renderTab();};
  node.querySelector('#ce-record-scope').onchange=e=>{state.recordScope=e.target.value;void renderTab();};
- if(yearly)node.querySelector('#ce-record-load').onclick=()=>{const y=Number(node.querySelector('#ce-record-year').value);if(!Number.isInteger(y)||y<station.first_year||y>station.last_year){modal('Choose a year','Choose a year between '+station.first_year+' and '+station.last_year+'.');return;}if(y!==state.year)onChange({year:y});};
- node.querySelector('#ce-record-export').onclick=()=>csv('station-records.csv',['station','scope','period','year','month','record','value','unit','sample_days','dates','verification','observation_details'],Object.entries(d.records).map(([k,r])=>[state.station,d.scope,d.period_label,d.year,d.month,k,r.value,unit[recordVars[k]],r.sample_count,r.dates,r.needs_verification,r.observations]));
+ if(yearly)node.querySelector('#ce-record-load').onclick=()=>{
+  const y=Number(node.querySelector('#ce-record-year').value);
+  if(!Number.isInteger(y)||y<first||y>last){modal('Choose a year','Choose a year between '+first+' and '+last+'.');return;}
+  if(national){state.nationalYear=y;void renderTab();}else if(y!==state.year)onChange({year:y});
+ };
+ node.querySelector('#ce-record-export').onclick=()=>csv(national?'national-records.csv':'station-records.csv',['area','station','scope','period','year','month','record','value','unit','sample_days','dates','verification','observation_details'],Object.entries(d.records).map(([k,r])=>[national?'Romania':'Station',national?'all stations':state.station,d.scope,d.period_label,d.year,d.month,k,r.value,unit[recordVars[k]],r.sample_count,r.dates,r.needs_verification,r.observations]));
 }
+
 const colors={tmax_c:"#ca6447",tmean_c:"#0b8098",tmin_c:"#7285c0"};
 function renderTemperature(node,d){
  const labels=d.monthly_normals.map(m=>new Date(2000,m.month-1,1).toLocaleString("en-GB",{month:"short"}));

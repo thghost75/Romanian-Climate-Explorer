@@ -210,6 +210,34 @@ class Explorer:
     def overview(self, station, month, day, normal):
         return {"station":self.station(station),"daily":self.daily(station,month,day,normal),
                 "records":self.records(station,"day",month,day)}
+    def national_records(self, scope='day', month=1, day=1, year=None):
+        from .national_records import aggregate, period
+        year = self.year(year if year is not None else date.today().year)
+        key, label = period(scope, int(month), int(day), year)
+        first = min(s['first_year'] for s in self.stations.values())
+        last = max(s['last_year'] for s in self.stations.values())
+        if scope in ('year', 'month-year') and not first <= year <= last:
+            raise ValueError('Year is outside the national archive')
+        indexed = self.products.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='national_records'").fetchone()
+        if indexed:
+            row = self.products.db.execute('SELECT data_json FROM national_records WHERE scope=? AND period=?', (scope,key)).fetchone()
+            data = json.loads(row[0]) if row else {'station_count':0,'records':{k:{'value':None,'sample_count':0,'holders':[]} for k in RECORD_VARIABLES}}
+        else:
+            data = aggregate(self.source, self.products.db, scope, key)[scope,key]
+        for name, record in data['records'].items():
+            observations = []
+            for station, when in record.pop('holders'):
+                detail = self.annotate_record(station, {'dates':[when]}, RECORD_VARIABLES[name])
+                observations.extend({'station_id':station, 'station_name':self.stations[station]['station_name'], **o}
+                                    for o in detail['observations'])
+            record['observations'] = observations
+            record['dates'] = sorted({o['date'] for o in observations})
+            record['needs_verification'] = any(o['quality_flags'] or o['verification_notes'] for o in observations)
+        return {**data, 'area':'national', 'scope':scope, 'period_label':label,
+                'year':year if scope in ('year','month-year') else None,
+                'month':int(month) if scope in ('day','month','month-year') else None,
+                'first_year':first, 'last_year':last, 'network_station_count':len(self.stations),
+                'qc_policy':'Extremes across the stations available in this archive, not a national average or a certified list of official Romanian records. Variable quality checks apply; all tied stations and dates are retained. Coverage varies by period.'}
     def series(self, station, normal):
         s = self.station(station); self.normal(normal)
         return {"station_id":station,"normal":normal,"annual_anomaly_normal":self.products.policy["normal"],
@@ -362,6 +390,7 @@ class Explorer:
         if endpoint=="overview": return self.overview(station,month,day,normal)
         if endpoint=="daily": return self.daily(station,month,day,normal)
         if endpoint=="records": return self.records(station,get("scope","day"),month,day,year)
+        if endpoint=="national-records": return self.national_records(get("scope","day"),month,day,year)
         if endpoint in ("temperature","rainfall"):
             data=self.series(station,normal)
             keep={"tmean_c","tmin_c","tmax_c"} if endpoint=="temperature" else {"precip_mm"}
