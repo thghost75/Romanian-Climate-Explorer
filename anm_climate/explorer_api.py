@@ -4,6 +4,7 @@ Source reads are bounded by station/date. Statistical products always come from
 Phase 3. No ingestion, migration, database writes, or network access occurs here.
 """
 import json
+import calendar
 import math
 import sqlite3
 import unicodedata
@@ -209,6 +210,8 @@ class Explorer:
             "qc_policy":"Quality-checked observations for each variable; all tied dates retained. Missing days are excluded from sample counts. Source flags remain visible in details."}
     def station_rankings(self, station, kind='lowest_tmin', scope='month', month=1, day=1, year=None):
         """Ten distinct extreme values, grouping every tied observation date."""
+        if kind in ('wettest_month','driest_month','wettest_year','driest_year'):
+            return self.rainfall_rankings(station,kind,month)
         from .national_records import period
         info = self.station(station)
         if kind not in RECORD_VARIABLES: raise ValueError('Unknown record category')
@@ -244,6 +247,52 @@ class Explorer:
                 'month':int(month) if scope in ('day','month','month-year') else None,
                 'sample_count':len(valid),'ranking':ranked,
                 'qc_policy':'Up to ten distinct extreme values, numbered 1–10. Equal values are grouped in one row with every tied date retained. Select the dates to inspect them. Missing and quality-excluded values are omitted.'}
+
+    def rainfall_rankings(self, station, kind, month=1):
+        info = self.station(station)
+        monthly = kind.endswith('_month')
+        month = int(month)
+        if not 1 <= month <= 12: raise ValueError('Month must be between 1 and 12')
+        table = 'monthly_summary' if monthly else 'annual_summary'
+        sql = f'SELECT year,data_json FROM {table} WHERE station_id=?'
+        args = [station]
+        if monthly:
+            sql += ' AND month=?'
+            args.append(month)
+        candidates = []
+        excluded = 0
+        for row in self.products.db.execute(sql+' ORDER BY year',args):
+            year = row['year']
+            summary = json.loads(row['data_json'])
+            rain = summary.get('variables',{}).get('precip_mm',{})
+            expected = calendar.monthrange(year,month)[1] if monthly else 365+int(calendar.isleap(year))
+            total = rain.get('total')
+            if not rain.get('eligible') or rain.get('sample_count') != expected or total is None or not math.isfinite(total) or total < 0 or (not monthly and rain.get('eligible_months') != 12):
+                excluded += 1
+                continue
+            candidates.append({'year':year,'month':month if monthly else None,
+                'period':f'{year}-{month:02d}' if monthly else str(year),
+                'start_date':f'{year}-{month:02d}-01' if monthly else f'{year}-01-01',
+                'end_date':f'{year}-{month:02d}-{expected:02d}' if monthly else f'{year}-12-31',
+                'sample_count':expected,'expected_days':expected,'total':round(total,1)})
+        candidates.sort(key=lambda p:(p['total'] if kind.startswith('driest') else -p['total'],p['year']))
+        groups = []
+        for item in candidates:
+            if not groups or item['total'] != groups[-1]['value']:
+                if len(groups) == 10: break
+                groups.append({'rank':len(groups)+1,'value':item['total'],'periods':[],'needs_verification':False})
+            rows = self.observation_rows(station,item['start_date'],item['end_date'])
+            item['flagged_dates'] = [r['date'] for r in rows if r['quality_flags']]
+            item['verification_notes'] = self.reviews(station,item['start_date'],item['end_date'])
+            item['needs_verification'] = bool(item['flagged_dates'] or item['verification_notes'])
+            groups[-1]['periods'].append(item)
+            groups[-1]['needs_verification'] |= item['needs_verification']
+        return {'station_id':station,'station_name':info['station_name'],'kind':kind,
+                'scope':'month' if monthly else 'all','year':None,'month':month if monthly else None,
+                'period_unit':'month' if monthly else 'year',
+                'period_label':f'{date(2000,month,1):%B} totals · full archive' if monthly else 'Annual totals · full archive',
+                'sample_count':len(candidates),'excluded_period_count':excluded,'ranking':groups,
+                'qc_policy':'Ten distinct rainfall totals, numbered 1–10; equal totals share one row with every tied period retained. Only complete calendar months or years with eligible rainfall on every day qualify. Incomplete periods are excluded, never treated as dry. Trace rainfall contributes 0 mm.'}
 
     def overview(self, station, month, day, normal):
         return {"station":self.station(station),"daily":self.daily(station,month,day,normal),

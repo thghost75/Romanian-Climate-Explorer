@@ -78,6 +78,14 @@ and quality details; CSV exports include the rankings. **Record summary** keeps
 the single-record-per-category view available. Rankings use existing observations
 and add no stored copy of station data.
 
+**Wettest months / Driest months** rank rainfall totals for the selected calendar
+month across the station's full archive. **Wettest years / Driest years** rank
+annual totals across the full archive, independently of any selected year.
+Only periods with eligible rainfall for every calendar day qualify; annual
+totals also require twelve eligible months. Partial observed totals are excluded
+from both lists. Ties are grouped at the displayed 0.1 mm precision, with all
+tied periods, coverage counts and quality details retained in the view and CSV.
+
 Each deployment rebuilds a compact `national_records` table in the serving
 database from the verified observations and QC exclusions. This adds about 2.4 MB
 of summaries and avoids scanning the archive on visitor requests. The full source
