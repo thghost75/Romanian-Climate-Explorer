@@ -207,6 +207,46 @@ class Explorer:
             "year":year,"month":month if scope in ('day','month','month-year') else None,"period_label":period_label,
             "records":{k:self.annotate_record(station,merged[k],v) for k,v in RECORD_VARIABLES.items() if k in merged},
             "qc_policy":"Quality-checked observations for each variable; all tied dates retained. Missing days are excluded from sample counts. Source flags remain visible in details."}
+    def station_rankings(self, station, kind='lowest_tmin', scope='month', month=1, day=1, year=None):
+        """Ten extreme observation dates for one station, including cutoff ties."""
+        from .national_records import period
+        info = self.station(station)
+        if kind not in RECORD_VARIABLES: raise ValueError('Unknown record category')
+        year = self.year(year if year is not None else date.today().year)
+        key, label = period(scope, int(month), int(day), year)
+        if scope in ('year', 'month-year') and not info['first_year'] <= year <= info['last_year']:
+            raise ValueError('Year is outside this station archive')
+        variable = RECORD_VARIABLES[kind]
+        excluded = {r[0] for r in self.products.db.execute(
+            'SELECT date FROM qc_exclusions WHERE station_id=? AND variable=?', (station, variable))}
+        sql = f'SELECT date,{variable} FROM daily_observations WHERE station_id=?'
+        args = [station]
+        if scope in ('year', 'month-year'):
+            sql += ' AND date BETWEEN ? AND ?'
+            args.extend((key+('-01-01' if scope=='year' else '-01'), key+('-12-31' if scope=='year' else '-31')))
+        elif scope in ('day','month'):
+            sql += ' AND substr(date,6,?)=?'
+            args.extend((len(key),key))
+        valid = [(r[0],r[1]) for r in self.source.execute(sql,args)
+                 if r[1] is not None and math.isfinite(r[1]) and r[0] not in excluded]
+        lowest = kind.startswith('lowest')
+        valid.sort(key=lambda r:(r[1] if lowest else -r[1],r[0]))
+        cutoff = valid[min(9,len(valid)-1)][1] if valid else None
+        ranked = []
+        previous = None
+        rank = 0
+        for index,(when,value) in enumerate(valid):
+            if index >= 10 and value != cutoff: break
+            if value != previous: rank = index+1
+            detail = self.annotate_record(station, {'value':value,'dates':[when]}, variable)
+            ranked.append({'rank':rank,'date':when,**detail})
+            previous = value
+        return {'station_id':station,'station_name':info['station_name'],'kind':kind,'scope':scope,
+                'period_label':label,'year':year if scope in ('year','month-year') else None,
+                'month':int(month) if scope in ('day','month','month-year') else None,
+                'sample_count':len(valid),'ranking':ranked,
+                'qc_policy':'Ten most extreme daily observations for this station. Equal values share a rank; all ties at tenth place are included. Missing and quality-excluded values are omitted.'}
+
     def overview(self, station, month, day, normal):
         return {"station":self.station(station),"daily":self.daily(station,month,day,normal),
                 "records":self.records(station,"day",month,day)}
@@ -390,6 +430,7 @@ class Explorer:
         if endpoint=="overview": return self.overview(station,month,day,normal)
         if endpoint=="daily": return self.daily(station,month,day,normal)
         if endpoint=="records": return self.records(station,get("scope","day"),month,day,year)
+        if endpoint=="station-rankings": return self.station_rankings(station,get('kind','lowest_tmin'),get('scope','month'),month,day,year)
         if endpoint=="national-records": return self.national_records(get("scope","day"),month,day,year)
         if endpoint in ("temperature","rainfall"):
             data=self.series(station,normal)

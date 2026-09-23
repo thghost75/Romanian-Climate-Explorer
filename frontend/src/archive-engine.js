@@ -8,7 +8,7 @@ const unit={tmean_c:"°C",tmin_c:"°C",tmax_c:"°C",precip_mm:"mm",wind_mean_ms:
 const names={tmean_c:"Mean temperature",tmin_c:"Minimum temperature",tmax_c:"Maximum temperature",precip_mm:"Precipitation",wind_mean_ms:"Mean wind",pressure_msl_hpa:"Sea-level pressure"};
 const recordNames={highest_tmax:"Highest Tmax",lowest_tmin:"Lowest Tmin",lowest_tmax:"Lowest Tmax",highest_tmin:"Highest Tmin",highest_tmean:"Highest Tmean",lowest_tmean:"Lowest Tmean",highest_precip:"Wettest day",highest_mean_wind:"Highest mean wind",highest_pressure:"Highest pressure",lowest_pressure:"Lowest pressure"};
 const recordVars={highest_tmax:"tmax_c",lowest_tmin:"tmin_c",lowest_tmax:"tmax_c",highest_tmin:"tmin_c",highest_tmean:"tmean_c",lowest_tmean:"tmean_c",highest_precip:"precip_mm",highest_mean_wind:"wind_mean_ms",highest_pressure:"pressure_msl_hpa",lowest_pressure:"pressure_msl_hpa"};
-const today=new Date(),state={station:"0-20000-0-15085",normal:"1991-2020",month:today.getMonth()+1,day:today.getDate(),year:today.getFullYear()-1,tab:"overview",recordScope:"day",recordArea:"station",nationalYear:null,mode:"stations",catalogue:[],boundary:null};
+const today=new Date(),state={station:"0-20000-0-15085",normal:"1991-2020",month:today.getMonth()+1,day:today.getDate(),year:today.getFullYear()-1,tab:"overview",recordScope:"month",recordView:"ranking",recordKind:"lowest_tmin",recordArea:"station",nationalYear:null,mode:"stations",catalogue:[],boundary:null};
 let serial=0,mapSerial=0;const cache=new Map(),API="";
 async function api(endpoint,params={}){
  const url=API+"/api/climate/"+endpoint+"?"+new URLSearchParams(params);
@@ -148,8 +148,8 @@ async function renderTab(){
  const request=++serial;stationTitle();host.querySelectorAll("[data-tab]").forEach(b=>{b.classList.toggle("active",b.dataset.tab===state.tab);b.setAttribute("aria-current",b.dataset.tab===state.tab?"page":"false");});
  const content=$("ce-content");content.dataset.ready="false";content.innerHTML='<p class="ce-status" role="status">Loading '+E(state.tab)+'…</p>';
  try{
- const endpoint={overview:"overview",records:state.recordArea==="national"?"national-records":"records",temperature:"temperature",rainfall:"rainfall",extremes:"events",history:"history"}[state.tab];
- const extra=state.tab==="extremes"?{kind:"heatwave",start:(state.year-4)+"-01-01",end:state.year+"-12-31"}:state.tab==="records"?{scope:state.recordScope,...(state.recordArea==="national"?{year:state.nationalYear??state.year}:{})}:{};
+ const endpoint={overview:"overview",records:state.recordArea==="national"?"national-records":state.recordView==="ranking"?"station-rankings":"records",temperature:"temperature",rainfall:"rainfall",extremes:"events",history:"history"}[state.tab];
+ const extra=state.tab==="extremes"?{kind:"heatwave",start:(state.year-4)+"-01-01",end:state.year+"-12-31"}:state.tab==="records"?{scope:state.recordScope,kind:state.recordKind,...(state.recordArea==="national"?{year:state.nationalYear??state.year}:{})}:{};
  const data=await api(endpoint,{...params(),...extra});if(request!==serial)return;
  await ({overview:renderOverview,records:renderRecords,temperature:renderTemperature,rainfall:renderRainfall,extremes:renderExtremes,history:renderHistory}[state.tab])(content,data);
  if(request===serial){Object.assign(content.dataset,{ready:"true",station:state.station,normal:state.normal,tab:state.tab,year:String(state.year)});}
@@ -168,13 +168,15 @@ function renderOverview(node,d){
  node.querySelectorAll("[data-record]").forEach(b=>b.onclick=()=>recordDetails(records[b.dataset.record],recordNames[b.dataset.record]));
 }
 function renderRecords(node,d){
- const national=d.area==='national';
+ const national=d.area==='national',ranking=Array.isArray(d.ranking);
  const station=state.catalogue.find(s=>s.station_id===state.station);
  const first=national?d.first_year:station.first_year,last=national?d.last_year:station.last_year;
  const recordYear=national?(state.nationalYear??state.year):state.year;
  const yearly=['year','month-year'].includes(state.recordScope);
  const scopes=[['day','Calendar day · all years'],['month','Calendar month · all years'],['month-year','Month in a selected year'],['year','Selected year'],['all','All-time records']];
  node.innerHTML='<div class="ce-controls"><label>Record area<select id="ce-record-area" aria-label="Record area"><option value="station"'+(!national?' selected':'')+'>Selected station</option><option value="national"'+(national?' selected':'')+'>Romania · all stations</option></select></label><label>Record scope<select id="ce-record-scope" aria-label="Record scope">'+scopes.map(([value,label])=>'<option value="'+value+'"'+(value===state.recordScope?' selected':'')+'>'+label+'</option>').join('')+'</select></label>'+
+ (!national?'<label>Records display<select id="ce-record-view" aria-label="Records display"><option value="ranking"'+(ranking?' selected':'')+'>Top 10 observations</option><option value="summary"'+(!ranking?' selected':'')+'>Record summary</option></select></label>':'')+
+ (ranking?'<label>Record category<select id="ce-record-kind" aria-label="Record category">'+Object.entries(recordNames).map(([k,label])=>'<option value="'+k+'"'+(k===state.recordKind?' selected':'')+'>'+E(label)+'</option>').join('')+'</select></label>':'')+
  (yearly?'<label>Record year<input id="ce-record-year" type="number" min="'+first+'" max="'+last+'" value="'+recordYear+'"></label><button id="ce-record-load">View records</button>':'')+
  '<button id="ce-record-export">Export records CSV</button></div><div id="ce-record-table"></div>';
  const holderCell=(k,r)=>{
@@ -182,19 +184,31 @@ function renderRecords(node,d){
   const entries=national?r.observations.map(o=>o.station_name+' · '+o.date):r.dates;
   return '<button data-record="'+k+'">'+entries.length+' '+(national?'station/date result':'date')+(entries.length===1?'':'s')+' · inspect</button><div class="ce-muted">'+E(entries.slice(0,2).join(' · '))+(entries.length>2?' …':'')+'</div>';
  };
+ if(ranking){
+  const prettyDate=iso=>iso.split('-').reverse().join('.');
+  node.querySelector('#ce-record-table').innerHTML=panel('Top 10 · '+recordNames[d.kind]+' · '+d.period_label,
+   '<p class="ce-small"><strong>'+E(d.station_name)+'</strong> · '+E(d.sample_count)+' eligible observation days</p><p class="ce-small ce-muted">'+E(d.qc_policy)+'</p>'+
+   (d.ranking.length?table(['Rank','Value','Date · inspect'],d.ranking.map((r,i)=>[E(r.rank),E(fmt(r.value)+' '+unit[recordVars[d.kind]]),'<button data-ranking="'+i+'" aria-label="Inspect observation '+E(prettyDate(r.date))+'">'+E(prettyDate(r.date))+'</button> '+warn(r)])):'<p>No eligible observations for this period.</p>'));
+  node.querySelector('#ce-record-table').classList.add('ce-rankings');
+  node.querySelectorAll('[data-ranking]').forEach(b=>b.onclick=()=>recordDetails(d.ranking[Number(b.dataset.ranking)],recordNames[d.kind]));
+ }else{
  node.querySelector('#ce-record-table').innerHTML=panel((national?'National records · ':'Historical records · ')+d.period_label,
   (national?'<p class="ce-small">'+E(d.station_count)+' of '+E(d.network_station_count)+' stations contribute eligible observations for this period.</p>':'')+
   '<p class="ce-small ce-muted">'+E(d.qc_policy)+'</p><p class="ce-small ce-muted">Lowest Tmax is the coldest daily maximum; highest Tmin is the warmest daily minimum. Values are daily extremes within the selected period.</p>'+
   table(['Record','Value',national?'Sample (station-days)':'Sample (days)',national?'Tied stations & dates':'All tied dates','Quality'],Object.entries(d.records).map(([k,r])=>[E(recordNames[k]),E(r.value==null?'No data':fmt(r.value)+' '+unit[recordVars[k]]),E(r.sample_count),holderCell(k,r),r.value==null?'No eligible observations':warn(r)||'Eligible'])));
  node.querySelectorAll('[data-record]').forEach(b=>b.onclick=()=>recordDetails(d.records[b.dataset.record],recordNames[b.dataset.record],national));
+ }
  node.querySelector('#ce-record-area').onchange=e=>{state.recordArea=e.target.value;onChange({recordArea:state.recordArea});void renderTab();};
+ if(!national)node.querySelector('#ce-record-view').onchange=e=>{state.recordView=e.target.value;void renderTab();};
+ if(ranking)node.querySelector('#ce-record-kind').onchange=e=>{state.recordKind=e.target.value;void renderTab();};
  node.querySelector('#ce-record-scope').onchange=e=>{state.recordScope=e.target.value;void renderTab();};
  if(yearly)node.querySelector('#ce-record-load').onclick=()=>{
   const y=Number(node.querySelector('#ce-record-year').value);
   if(!Number.isInteger(y)||y<first||y>last){modal('Choose a year','Choose a year between '+first+' and '+last+'.');return;}
   if(national){state.nationalYear=y;void renderTab();}else if(y!==state.year)onChange({year:y});
  };
- node.querySelector('#ce-record-export').onclick=()=>csv(national?'national-records.csv':'station-records.csv',['area','station','scope','period','year','month','record','value','unit','sample_days','dates','verification','observation_details'],Object.entries(d.records).map(([k,r])=>[national?'Romania':'Station',national?'all stations':state.station,d.scope,d.period_label,d.year,d.month,k,r.value,unit[recordVars[k]],r.sample_count,r.dates,r.needs_verification,r.observations]));
+ if(ranking)node.querySelector('#ce-record-export').onclick=()=>csv('station-top-10.csv',['station','station_name','scope','period','record','rank','date','value','unit','eligible_days','verification','observation_details'],d.ranking.map(r=>[d.station_id,d.station_name,d.scope,d.period_label,d.kind,r.rank,r.date,r.value,unit[recordVars[d.kind]],d.sample_count,r.needs_verification,r.observations]));
+ else node.querySelector('#ce-record-export').onclick=()=>csv(national?'national-records.csv':'station-records.csv',['area','station','scope','period','year','month','record','value','unit','sample_days','dates','verification','observation_details'],Object.entries(d.records).map(([k,r])=>[national?'Romania':'Station',national?'all stations':state.station,d.scope,d.period_label,d.year,d.month,k,r.value,unit[recordVars[k]],r.sample_count,r.dates,r.needs_verification,r.observations]));
 }
 
 const colors={tmax_c:"#ca6447",tmean_c:"#0b8098",tmin_c:"#7285c0"};

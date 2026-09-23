@@ -70,6 +70,14 @@ records retain every tied station/date, variable-specific quality exclusions,
 source details and CSV exports. They describe extremes in the available archive;
 station coverage varies over time.
 
+The station Records view defaults to **Top 10 observations** for the selected
+calendar month across all years. Choose a record category to rank individual
+daily measurements, or select a specific year/month. Equal values share a rank
+and all observations tied at tenth place are retained. Dates open their source
+and quality details; CSV exports include the rankings. **Record summary** keeps
+the single-record-per-category view available. Rankings use existing observations
+and add no stored copy of station data.
+
 Each deployment rebuilds a compact `national_records` table in the serving
 database from the verified observations and QC exclusions. This adds about 2.4 MB
 of summaries and avoids scanning the archive on visitor requests. The full source
