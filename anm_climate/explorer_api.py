@@ -17,6 +17,7 @@ from .station_metadata import resolve_station_name, resolve_station_coordinates
 
 RECORD_VARIABLES = {
     "highest_tmax": "tmax_c", "lowest_tmin": "tmin_c",
+    "lowest_tmax": "tmax_c", "highest_tmin": "tmin_c",
     "highest_tmean": "tmean_c", "lowest_tmean": "tmean_c",
     "highest_precip": "precip_mm", "highest_mean_wind": "wind_mean_ms",
     "highest_pressure": "pressure_msl_hpa", "lowest_pressure": "pressure_msl_hpa",
@@ -132,17 +133,58 @@ class Explorer:
                     "source_member": r["source_member"], "source_line": r["source_line"]})
         obj["needs_verification"] = any(r["quality_flags"] or r["verification_notes"] for r in obj["observations"])
         return obj
-    def records(self, station, scope="day", month=1, day=1):
-        self.station(station)
+    def observed_records(self, station, labels, start, end, calendar_filter=""):
+        """Aggregate bounded station observations using the stored variable QC exclusions.
+
+        Also supports older snapshots whose precomputed records lack new categories.
+        """
+        exclusions = {(r['date'],r['variable']) for r in self.products.db.execute(
+            'SELECT date,variable FROM qc_exclusions WHERE station_id=? AND date BETWEEN ? AND ?',
+            (station,start,end))}
+        variables = sorted({RECORD_VARIABLES[label] for label in labels})
+        sql = 'SELECT date,' + ','.join(variables) + ' FROM daily_observations WHERE station_id=? AND date BETWEEN ? AND ?'
+        arguments = [station,start,end]
+        if calendar_filter:
+            sql += ' AND substr(date,6,?)=?'
+            arguments.extend((len(calendar_filter),calendar_filter))
+        sql += ' ORDER BY date'
+        result = {label:{'value':None,'dates':[],'years':[],'sample_count':0} for label in labels}
+        for row in self.source.execute(sql,arguments):
+            for label in labels:
+                variable = RECORD_VARIABLES[label]
+                value = row[variable]
+                if value is None or not math.isfinite(value) or (row['date'],variable) in exclusions:
+                    continue
+                record = result[label]
+                record['sample_count'] += 1
+                better = record['value'] is None or (value < record['value'] if label.startswith('lowest') else value > record['value'])
+                if better:
+                    record.update(value=value,dates=[],years=[])
+                if value == record['value']:
+                    record['dates'].append(row['date'])
+                    record['years'].append(int(row['date'][:4]))
+        for record in result.values():
+            record['years'] = sorted(set(record['years']))
+        return result
+
+    def records(self, station, scope="day", month=1, day=1, year=None):
+        station_info = self.station(station)
         month, day = int(month), int(day)
         self.products.day(month, day)
-        if scope not in ("day","month","all"): raise ValueError("Record scope must be day, month or all")
-        keys = [f"{month:02d}-{day:02d}"] if scope == "day" else [
-            k for k in CALENDAR if scope == "all" or k.startswith(f"{month:02d}-")]
+        if scope not in ("day","month","year","month-year","all"):
+            raise ValueError("Record scope must be day, month, year, month-year or all")
+        year = self.year(year if year is not None else date.today().year) if scope in ('year','month-year') else None
+        if year is not None and not station_info['first_year'] <= year <= station_info['last_year']:
+            raise ValueError('Year is outside this station archive')
+        keys = [] if year is not None else ([f"{month:02d}-{day:02d}"] if scope == "day" else [
+            k for k in CALENDAR if scope == "all" or k.startswith(f"{month:02d}-")])
         merged = {}
+        stored_labels = set(RECORD_VARIABLES)
         for key in keys:
             m,d = map(int,key.split("-"))
-            for label,r in self.products.get_daily_records(station,m,d)["records"].items():
+            daily = self.products.get_daily_records(station,m,d)["records"]
+            stored_labels.intersection_update(daily)
+            for label,r in daily.items():
                 if r.get("value") is None: continue
                 old = merged.get(label)
                 better = old is None or (r["value"] < old["value"] if label.startswith("lowest") else r["value"] > old["value"])
@@ -152,9 +194,19 @@ class Explorer:
                     old["dates"] = sorted(set(old["dates"] + r["dates"]))
                     old["years"] = sorted(set(old["years"] + r["years"]))
                 merged[label]["sample_count"] = total
+        labels = list(RECORD_VARIABLES) if year is not None else [label for label in RECORD_VARIABLES if label not in stored_labels]
+        start,end = (f'{year}-01-01',f'{year}-12-31') if year is not None else (station_info['first_observation'],station_info['last_observation'])
+        calendar_filter = f'{month:02d}-{day:02d}' if scope == 'day' else f'{month:02d}' if scope in ('month','month-year') else ''
+        if labels:
+            merged.update(self.observed_records(station,labels,start,end,calendar_filter))
+        period_label = {'day':f'Calendar day {month:02d}-{day:02d} · all available years',
+                        'month':f'{date(2000,month,1):%B} · all available years',
+                        'year':f'Year {year}', 'month-year':f'{date(2000,month,1):%B} {year}',
+                        'all':'All-time station records'}[scope]
         return {"station_id":station,"scope":scope,"calendar_day":f"{month:02d}-{day:02d}",
-            "records":{k:self.annotate_record(station,r,RECORD_VARIABLES[k]) for k,r in merged.items()},
-            "qc_policy":"Phase 3 variable-level eligibility; all tied dates retained. Other-variable flags remain visible."}
+            "year":year,"month":month if scope in ('day','month','month-year') else None,"period_label":period_label,
+            "records":{k:self.annotate_record(station,merged[k],v) for k,v in RECORD_VARIABLES.items() if k in merged},
+            "qc_policy":"Quality-checked observations for each variable; all tied dates retained. Missing days are excluded from sample counts. Source flags remain visible in details."}
     def overview(self, station, month, day, normal):
         return {"station":self.station(station),"daily":self.daily(station,month,day,normal),
                 "records":self.records(station,"day",month,day)}
@@ -256,10 +308,12 @@ class Explorer:
         self.products.day(int(month),int(day))
         rows=[]
         for sid in self.stations:
-            record=self.records(sid,"day",month,day)
+            # This national ranking needs only the three established categories.
+            record=self.products.get_daily_records(sid,int(month),int(day))
             for key in ("highest_tmax","lowest_tmin","highest_precip"):
                 r=record["records"].get(key)
-                if r:
+                if r and r.get('value') is not None:
+                    r=self.annotate_record(sid,r,RECORD_VARIABLES[key])
                     rows.append({"station_id":sid,"station_name":self.stations[sid]["station_name"],"record_type":key,**r})
         key=self.products.day(int(month),int(day))
         rain=[]
@@ -307,7 +361,7 @@ class Explorer:
         if endpoint=="stations": return self.catalogue(get("q",""))
         if endpoint=="overview": return self.overview(station,month,day,normal)
         if endpoint=="daily": return self.daily(station,month,day,normal)
-        if endpoint=="records": return self.records(station,get("scope","day"),month,day)
+        if endpoint=="records": return self.records(station,get("scope","day"),month,day,year)
         if endpoint in ("temperature","rainfall"):
             data=self.series(station,normal)
             keep={"tmean_c","tmin_c","tmax_c"} if endpoint=="temperature" else {"precip_mm"}

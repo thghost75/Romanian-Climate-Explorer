@@ -56,6 +56,9 @@ class PolicyTests(unittest.TestCase):
     def test_record_ties_all_dates(self):
         d,w,records=daily_products([row("2000-07-01",tx=35),row("2001-07-01",tx=35)],Policy())
         self.assertEqual(records["07-01"]["highest_tmax"]["dates"],["2000-07-01","2001-07-01"])
+        self.assertEqual(records["07-01"]["lowest_tmax"]["value"],35)
+        self.assertEqual(records["07-01"]["lowest_tmax"]["dates"],["2000-07-01","2001-07-01"])
+        self.assertEqual(records["07-01"]["highest_tmin"]["dates"],["2000-07-01","2001-07-01"])
     def test_month_missing_and_zero_are_distinct(self):
         rows=[row(f"2024-07-{d:02d}",rain=1) for d in range(1,31)]
         obj=month_summary(2024,7,rows,Policy())

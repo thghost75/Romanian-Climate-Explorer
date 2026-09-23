@@ -6,6 +6,7 @@ from datetime import date,timedelta
 from .phase3_policy import *
 
 RECORDS = (("highest_tmax","tmax_c","max"),("lowest_tmin","tmin_c","min"),
+ ("lowest_tmax","tmax_c","min"),("highest_tmin","tmin_c","max"),
  ("highest_tmean","tmean_c","max"),("lowest_tmean","tmean_c","min"),
  ("highest_precip","precip_mm","max"),("highest_mean_wind","wind_mean_ms","max"),
  ("highest_pressure","pressure_msl_hpa","max"),("lowest_pressure","pressure_msl_hpa","min"))
