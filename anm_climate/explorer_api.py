@@ -208,7 +208,7 @@ class Explorer:
             "records":{k:self.annotate_record(station,merged[k],v) for k,v in RECORD_VARIABLES.items() if k in merged},
             "qc_policy":"Quality-checked observations for each variable; all tied dates retained. Missing days are excluded from sample counts. Source flags remain visible in details."}
     def station_rankings(self, station, kind='lowest_tmin', scope='month', month=1, day=1, year=None):
-        """Ten extreme observation dates for one station, including cutoff ties."""
+        """Ten distinct extreme values, grouping every tied observation date."""
         from .national_records import period
         info = self.station(station)
         if kind not in RECORD_VARIABLES: raise ValueError('Unknown record category')
@@ -231,21 +231,19 @@ class Explorer:
                  if r[1] is not None and math.isfinite(r[1]) and r[0] not in excluded]
         lowest = kind.startswith('lowest')
         valid.sort(key=lambda r:(r[1] if lowest else -r[1],r[0]))
-        cutoff = valid[min(9,len(valid)-1)][1] if valid else None
-        ranked = []
-        previous = None
-        rank = 0
-        for index,(when,value) in enumerate(valid):
-            if index >= 10 and value != cutoff: break
-            if value != previous: rank = index+1
-            detail = self.annotate_record(station, {'value':value,'dates':[when]}, variable)
-            ranked.append({'rank':rank,'date':when,**detail})
-            previous = value
+        groups = []
+        for when,value in valid:
+            if not groups or value != groups[-1]['value']:
+                if len(groups) == 10: break
+                groups.append({'value':value,'dates':[]})
+            groups[-1]['dates'].append(when)
+        ranked = [{'rank':index+1,'date':record['dates'][0],
+                   **self.annotate_record(station,record,variable)} for index,record in enumerate(groups)]
         return {'station_id':station,'station_name':info['station_name'],'kind':kind,'scope':scope,
                 'period_label':label,'year':year if scope in ('year','month-year') else None,
                 'month':int(month) if scope in ('day','month','month-year') else None,
                 'sample_count':len(valid),'ranking':ranked,
-                'qc_policy':'Ten most extreme daily observations for this station. Equal values share a rank; all ties at tenth place are included. Missing and quality-excluded values are omitted.'}
+                'qc_policy':'Up to ten distinct extreme values, numbered 1–10. Equal values are grouped in one row with every tied date retained. Select the dates to inspect them. Missing and quality-excluded values are omitted.'}
 
     def overview(self, station, month, day, normal):
         return {"station":self.station(station),"daily":self.daily(station,month,day,normal),

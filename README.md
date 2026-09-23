@@ -70,10 +70,10 @@ records retain every tied station/date, variable-specific quality exclusions,
 source details and CSV exports. They describe extremes in the available archive;
 station coverage varies over time.
 
-The station Records view defaults to **Top 10 observations** for the selected
+The station Records view defaults to **Top 10 values** for the selected
 calendar month across all years. Choose a record category to rank individual
-daily measurements, or select a specific year/month. Equal values share a rank
-and all observations tied at tenth place are retained. Dates open their source
+daily measurements, or select a specific year/month. The ten distinct extreme values are numbered 1–10; equal values are grouped
+in one row with every tied observation date retained. Dates open their source
 and quality details; CSV exports include the rankings. **Record summary** keeps
 the single-record-per-category view available. Rankings use existing observations
 and add no stored copy of station data.

@@ -175,7 +175,7 @@ function renderRecords(node,d){
  const yearly=['year','month-year'].includes(state.recordScope);
  const scopes=[['day','Calendar day · all years'],['month','Calendar month · all years'],['month-year','Month in a selected year'],['year','Selected year'],['all','All-time records']];
  node.innerHTML='<div class="ce-controls"><label>Record area<select id="ce-record-area" aria-label="Record area"><option value="station"'+(!national?' selected':'')+'>Selected station</option><option value="national"'+(national?' selected':'')+'>Romania · all stations</option></select></label><label>Record scope<select id="ce-record-scope" aria-label="Record scope">'+scopes.map(([value,label])=>'<option value="'+value+'"'+(value===state.recordScope?' selected':'')+'>'+label+'</option>').join('')+'</select></label>'+
- (!national?'<label>Records display<select id="ce-record-view" aria-label="Records display"><option value="ranking"'+(ranking?' selected':'')+'>Top 10 observations</option><option value="summary"'+(!ranking?' selected':'')+'>Record summary</option></select></label>':'')+
+ (!national?'<label>Records display<select id="ce-record-view" aria-label="Records display"><option value="ranking"'+(ranking?' selected':'')+'>Top 10 values</option><option value="summary"'+(!ranking?' selected':'')+'>Record summary</option></select></label>':'')+
  (ranking?'<label>Record category<select id="ce-record-kind" aria-label="Record category">'+Object.entries(recordNames).map(([k,label])=>'<option value="'+k+'"'+(k===state.recordKind?' selected':'')+'>'+E(label)+'</option>').join('')+'</select></label>':'')+
  (yearly?'<label>Record year<input id="ce-record-year" type="number" min="'+first+'" max="'+last+'" value="'+recordYear+'"></label><button id="ce-record-load">View records</button>':'')+
  '<button id="ce-record-export">Export records CSV</button></div><div id="ce-record-table"></div>';
@@ -186,9 +186,9 @@ function renderRecords(node,d){
  };
  if(ranking){
   const prettyDate=iso=>iso.split('-').reverse().join('.');
-  node.querySelector('#ce-record-table').innerHTML=panel('Top 10 · '+recordNames[d.kind]+' · '+d.period_label,
+  node.querySelector('#ce-record-table').innerHTML=panel('Top 10 values · '+recordNames[d.kind]+' · '+d.period_label,
    '<p class="ce-small"><strong>'+E(d.station_name)+'</strong> · '+E(d.sample_count)+' eligible observation days</p><p class="ce-small ce-muted">'+E(d.qc_policy)+'</p>'+
-   (d.ranking.length?table(['Rank','Value','Date · inspect'],d.ranking.map((r,i)=>[E(r.rank),E(fmt(r.value)+' '+unit[recordVars[d.kind]]),'<button data-ranking="'+i+'" aria-label="Inspect observation '+E(prettyDate(r.date))+'">'+E(prettyDate(r.date))+'</button> '+warn(r)])):'<p>No eligible observations for this period.</p>'));
+   (d.ranking.length?table(['Rank','Value','Dates · inspect'],d.ranking.map((r,i)=>[E(r.rank),E(fmt(r.value)+' '+unit[recordVars[d.kind]]),'<button data-ranking="'+i+'" aria-label="Inspect rank '+r.rank+' dates">'+E(r.dates.length===1?prettyDate(r.dates[0]):r.dates.length+' tied dates')+'</button>'+(r.dates.length>1?'<div class="ce-small ce-muted">'+E(r.dates.slice(0,2).map(prettyDate).join(' · '))+(r.dates.length>2?' …':'')+'</div>':'')+' '+warn(r)])):'<p>No eligible observations for this period.</p>'));
   node.querySelector('#ce-record-table').classList.add('ce-rankings');
   node.querySelectorAll('[data-ranking]').forEach(b=>b.onclick=()=>recordDetails(d.ranking[Number(b.dataset.ranking)],recordNames[d.kind]));
  }else{
@@ -207,7 +207,7 @@ function renderRecords(node,d){
   if(!Number.isInteger(y)||y<first||y>last){modal('Choose a year','Choose a year between '+first+' and '+last+'.');return;}
   if(national){state.nationalYear=y;void renderTab();}else if(y!==state.year)onChange({year:y});
  };
- if(ranking)node.querySelector('#ce-record-export').onclick=()=>csv('station-top-10.csv',['station','station_name','scope','period','record','rank','date','value','unit','eligible_days','verification','observation_details'],d.ranking.map(r=>[d.station_id,d.station_name,d.scope,d.period_label,d.kind,r.rank,r.date,r.value,unit[recordVars[d.kind]],d.sample_count,r.needs_verification,r.observations]));
+ if(ranking)node.querySelector('#ce-record-export').onclick=()=>csv('station-top-10.csv',['station','station_name','scope','period','record','rank','dates','value','unit','eligible_days','verification','observation_details'],d.ranking.map(r=>[d.station_id,d.station_name,d.scope,d.period_label,d.kind,r.rank,r.dates,r.value,unit[recordVars[d.kind]],d.sample_count,r.needs_verification,r.observations]));
  else node.querySelector('#ce-record-export').onclick=()=>csv(national?'national-records.csv':'station-records.csv',['area','station','scope','period','year','month','record','value','unit','sample_days','dates','verification','observation_details'],Object.entries(d.records).map(([k,r])=>[national?'Romania':'Station',national?'all stations':state.station,d.scope,d.period_label,d.year,d.month,k,r.value,unit[recordVars[k]],r.sample_count,r.dates,r.needs_verification,r.observations]));
 }
 
