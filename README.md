@@ -109,6 +109,28 @@ Commit the updated manifest and review notes, publish the new gzip files under a
 The downloader intentionally rejects data that does not match the committed
 checksums. Do not overwrite the contents of an existing tagged snapshot.
 
+## Public visits counter
+
+The footer displays visits counted from the counter's activation date, not past
+traffic or unique people. A signed, HTTP-only first-party cookie suppresses
+repeat counts for 30 minutes. Browsers blocking cookies can count again on reload;
+known crawler user agents are excluded. Local and preview builds never increment
+the production counter. This is an approximate public counter, not audited analytics.
+
+Connect a **Free** Upstash Redis database through Vercel Storage to this project's
+Production environment, then redeploy. The integration's `KV_REST_API_URL` and
+`KV_REST_API_TOKEN` are supported, as are `UPSTASH_REDIS_REST_URL` /
+`UPSTASH_REDIS_REST_TOKEN` or explicit `COUNTER_REDIS_REST_URL` /
+`COUNTER_REDIS_REST_TOKEN`. Credentials stay on the server. Do not enable automatic
+paid upgrades. The counter is hidden if storage is unavailable or unconfigured.
+
+`GET /api/visits` reads the total; same-origin `POST /api/visits` counts a visit.
+Redis stores one permanent hash (`rce:public-visits:v1`) containing the total and
+start date. No visitor IPs, identifiers or browsing history are stored in Redis.
+Atomic increments prevent lost updates; the total survives deployments and climate
+refreshes. Keep this database and key when cleaning stale climate data. The counter
+uses one small storage request per page load and does not poll in the background.
+
 ## Attribution
 
 Chart presentation: © WxProbs.

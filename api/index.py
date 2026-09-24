@@ -11,21 +11,26 @@ from urllib.parse import parse_qsl, urlencode, urlparse
 from anm_climate.config import DEFAULT_ROOT
 from anm_climate.explorer_http import handle_climate
 from anm_climate.explorer_api import readonly
+from anm_climate.visit_counter import visit_response
 
 REQUIRED_FILES = ('climate.sqlite', 'climatology.sqlite', 'processed/phase3/candidate_review_notes.json')
 
 
 class handler(BaseHTTPRequestHandler):
-    def json_response(self, status, payload):
+    def json_response(self, status, payload, headers=None):
         body = json.dumps(payload).encode('utf-8')
         self.send_response(status)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(body)))
-        self.send_header('Cache-Control', 'no-store')
+        for name, value in (headers or {'Cache-Control': 'no-store'}).items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
 
     def do_GET(self):
+        self.dispatch('GET')
+
+    def dispatch(self, method):
         parsed = urlparse(self.path)
         try:
             if len(parsed.query) > 2300:
@@ -40,6 +45,8 @@ class handler(BaseHTTPRequestHandler):
                 endpoint = parsed.path[len('/api/climate/'):]
             elif parsed.path == '/api/health':
                 endpoint = 'health'
+            elif parsed.path == '/api/visits':
+                endpoint = 'visits'
             elif parsed.path in ('/api', '/api/', '/api/index', '/api/index.py') and routed:
                 endpoint = routed[0]
             else:
@@ -49,6 +56,12 @@ class handler(BaseHTTPRequestHandler):
                     or (routed and routed[0] != endpoint)
                     or (captured and captured[0] != endpoint)):
                 raise ValueError('Invalid endpoint')
+            if endpoint == 'visits':
+                self.json_response(*visit_response(method, self.headers))
+                return
+            if method != 'GET':
+                self.json_response(405, {'error': 'Climate data is read-only. Use GET.'})
+                return
             serving_root = DEFAULT_ROOT.parent / 'runtime' if os.environ.get('VERCEL') == '1' else DEFAULT_ROOT
             root = Path(os.environ.get('CLIMATE_DATA_ROOT', str(serving_root)))
             if endpoint == 'health':
@@ -71,4 +84,4 @@ class handler(BaseHTTPRequestHandler):
             self.json_response(400, {'error': str(error)})
 
     def do_POST(self):
-        self.json_response(405, {'error': 'This API is read-only. Use GET.'})
+        self.dispatch('POST')

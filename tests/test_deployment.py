@@ -12,7 +12,7 @@ import threading
 import unittest
 from unittest.mock import Mock, patch
 from urllib.error import HTTPError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from api.index import handler
 from anm_climate.explorer_api import readonly
@@ -217,6 +217,26 @@ class RoutingTests(unittest.TestCase):
     def test_private_files_are_not_routes(self):
         for path in ['/data/anm/climate.sqlite', '/anm_climate/config.py', '/api']:
             self.assertEqual(self.request(path)[0], 404)
+
+    def test_visit_routes_keep_cache_and_cookie_headers(self):
+        with patch('api.index.visit_response', return_value=(200, {'visits': 17}, {
+                'Cache-Control': 'no-store', 'Set-Cookie': 'test=1; HttpOnly'})) as visits:
+            for path in ['/api/visits', '/api?__climate_endpoint=visits']:
+                with urlopen(Request(self.url + path, data=b'', method='POST'), timeout=5) as response:
+                    self.assertEqual(json.load(response), {'visits': 17})
+                    self.assertEqual(response.headers['Cache-Control'], 'no-store')
+                    self.assertEqual(response.headers['Set-Cookie'], 'test=1; HttpOnly')
+                self.assertEqual(visits.call_args.args[0], 'POST')
+            self.assertEqual(self.request('/api/visits'), (200, {'visits': 17}))
+            self.assertEqual(visits.call_args.args[0], 'GET')
+
+    def test_climate_post_remains_read_only(self):
+        with patch('api.index.handle_climate') as climate:
+            with self.assertRaises(HTTPError) as error:
+                urlopen(Request(self.url + '/api/climate/stations', data=b'', method='POST'), timeout=5)
+            self.assertEqual(error.exception.code, 405)
+            error.exception.close()
+            climate.assert_not_called()
 
     def test_health_reports_missing_data_without_local_paths(self):
         with tempfile.TemporaryDirectory(dir=TEST_TMP) as folder, patch.dict(os.environ, {'CLIMATE_DATA_ROOT': folder}):

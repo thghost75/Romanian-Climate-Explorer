@@ -4,6 +4,7 @@ import { Activity, ArrowDownToLine, Check, ChevronRight, CloudRain, Grid2X2, Map
 import snapshot from './data.json';
 import boundary from './romania.json';
 import { ArchivePane } from './ArchivePane';
+import { VisitCounter } from './VisitCounter';
 import { inlineSVGTheme } from './svg-theme.js';
 import type { ArchiveTab, ArchiveChange } from './archive-engine.js';
 
@@ -92,7 +93,7 @@ function App(){
         {section==='extremes'&&<div className="archive-section-heading"><span className="eyebrow">Historic events</span><h2>Heat, cold, rain and dry spells</h2></div>}
         {calendarControls}
         <ArchivePane state={{station:selected,tab:section,year:archiveYear,month,day,normal}} onChange={archiveChange}/>
-        <footer><span>© WxProbs <b>·</b> Observations: ANM <b>·</b> Locations: ANM / WMO OSCAR</span><span>Observations through {snapshot.snapshotDate}</span></footer>
+        <footer><span>© WxProbs <b>·</b> Observations: ANM <b>·</b> Locations: ANM / WMO OSCAR</span><VisitCounter/><span>Observations through {snapshot.snapshotDate}</span></footer>
         <div className="notice" role="status">{notice&&<><Check size={15}/>{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss message"><X size={14}/></button></>}</div>
       </main>
     </div>

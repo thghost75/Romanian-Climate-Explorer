@@ -49,6 +49,9 @@
 [data-theme=light] .comparison-values>div{background:#e3eef3}
 [data-theme=light] .comparison-pickers .legend-dot,[data-theme=light] .comparison-values .legend-dot{box-shadow:0 0 0 1px #516878}
 [data-theme=light] footer{color:#526f80}
+footer{flex-wrap:wrap;column-gap:20px;row-gap:6px}
+.visit-counter{white-space:nowrap;font-variant-numeric:tabular-nums}
+.visit-counter small{font-size:inherit}
 [data-theme=light] .notice{background:#d2eee2;color:#174c3e;border:1px solid #85bdab}
 [data-theme=light] .archive-shortcuts button{background:#fff;border-color:#bdced9;color:#107d72}
 [data-theme=light] .archive-shortcuts strong{color:#244d5c}
