@@ -93,6 +93,7 @@ function App(){
         {section==='extremes'&&<div className="archive-section-heading"><span className="eyebrow">Historic events</span><h2>Heat, cold, rain and dry spells</h2></div>}
         {calendarControls}
         <ArchivePane state={{station:selected,tab:section,year:archiveYear,month,day,normal}} onChange={archiveChange}/>
+        <aside className="support-note" aria-label="Support my work"><p>If you'd like to support my work on RORAD, you can <a href="https://ko-fi.com/jerrems" target="_blank" rel="noopener noreferrer">buy me a coffee on Ko-fi</a>. Every contribution is appreciated and helps me keep improving the platform and cover server and domain costs.</p></aside>
         <footer><span>© WxProbs <b>·</b> Observations: ANM <b>·</b> Locations: ANM / WMO OSCAR</span><VisitCounter/><span>Observations through {snapshot.snapshotDate}</span></footer>
         <div className="notice" role="status">{notice&&<><Check size={15}/>{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss message"><X size={14}/></button></>}</div>
       </main>

@@ -1,5 +1,9 @@
 .theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#1b3444;border:1px solid #426071;border-radius:6px;color:#e3eff5;font-size:14px;padding:9px 12px;min-height:40px;white-space:nowrap}
 .theme-toggle:hover{background:#294857}.theme-toggle:focus-visible{outline:2px solid #79dcca;outline-offset:3px}
+.support-note{margin-top:28px;padding:18px 20px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--muted);font-size:14px;line-height:1.7}
+.support-note a{color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.support-note a:hover{color:var(--accent-strong)}
+.support-note a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 :root[data-theme=light]{color-scheme:light;background:#f1f5f9;color:#183443;--ink:#183443;--muted:#526b7c;--line:#cbd9e2;--panel:#fff;--accent:#087f79;--accent-strong:#086a65}
 [data-theme=light] .topbar{background:#fff;border-color:#cbd9e2}
 [data-theme=light] .brand div>span,[data-theme=light] .offline{color:#526b7c}
