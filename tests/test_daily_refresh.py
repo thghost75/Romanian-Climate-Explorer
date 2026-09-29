@@ -1,5 +1,6 @@
-from contextlib import closing
+from contextlib import closing, redirect_stdout
 from datetime import date
+from io import StringIO
 import json
 from pathlib import Path
 import sqlite3
@@ -165,7 +166,7 @@ class DailyRefreshTests(unittest.TestCase):
             station = url.rstrip('/').split('/')[-1]
             return f'<a href="{station}_2026.zip">2026</a>'.encode()
 
-        with patch('scripts.refresh_daily.HttpClient') as http, patch('scripts.refresh_daily.download', side_effect=download_again):
+        with redirect_stdout(StringIO()), patch('scripts.refresh_daily.HttpClient') as http, patch('scripts.refresh_daily.download', side_effect=download_again):
             http.return_value.get.side_effect = listing
             result = run(self.root, TODAY)
             self.assertTrue(result['changed'])
