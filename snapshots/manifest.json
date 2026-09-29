@@ -5,30 +5,63 @@
     {
       "name": "climate.sqlite",
       "asset": "climate.sqlite.gz",
-      "bytes": 2343424000,
-      "sha256": "2fa1c5620dc7592cb6e0871c53922ff0ad2c6068dc82e389eca7aed93163dc4e",
-      "compressed_bytes": 414030498
+      "bytes": 2343448576,
+      "sha256": "6cbbde881962a84ac0a012d6139237061eec03dbe8c0edaed1a74e204b712dad",
+      "compressed_bytes": 414046579
     },
     {
       "name": "climatology.sqlite",
       "asset": "climatology.sqlite.gz",
-      "bytes": 1655513088,
-      "sha256": "adb8372ce822600cc9048382fcc6589c781877d4ef296f1a7a041eb01a8fb6be",
-      "compressed_bytes": 253236324
+      "bytes": 1655517184,
+      "sha256": "9f8b1b96298dd0d973677b85f3e6611370c8f5dfcbec9733fba914143e667d96",
+      "compressed_bytes": 255176838
     }
   ],
   "review_notes_sha256": "e8b46e38ba5587592662de50d1720729f3937e1e300de4b0f9ad9a9c69f7e66f",
-  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-36342606667-1",
+  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-36579299953-1",
   "refresh": {
     "changed": true,
-    "checked_at": "2026-09-27T19:11:47.938154+00:00",
-    "latest_observation": "2026-09-26",
+    "checked_at": "2026-09-29T14:12:57.821779+00:00",
+    "latest_observation": "2026-09-27",
     "station_count": 160,
-    "changed_stations": 160,
+    "changed_stations": 158,
     "checked_archives": 320,
     "checked_years": [
       2025,
       2026
+    ],
+    "status": "updated_with_retained_archives",
+    "retained_archives": [
+      {
+        "station_id": "0-20000-0-15387",
+        "year": 2026,
+        "reason": "previous_measurements_missing",
+        "published_sha256": "fa1b9e967750c2e6d6de6fb7a32e8845cb2555b4949a8f11042591a6ae63443c",
+        "downloaded_sha256": "2a97b400722ceec16aa40f5953ebb9ed2bb9eea00e651d9a66016c8c93be9689",
+        "missing_measurement_count": 1,
+        "missing_measurements": [
+          {
+            "date": "2026-09-26",
+            "variable": "precip_mm",
+            "previous_value": 0.0
+          }
+        ]
+      },
+      {
+        "station_id": "0-20000-0-15483",
+        "year": 2026,
+        "reason": "previous_measurements_missing",
+        "published_sha256": "c280b29355a40ca3992681485657654242cc465da12df4f5cc919fba075234b2",
+        "downloaded_sha256": "dc538a4b7cf7bfc630b55d0384102ecc2cf510806266a47cbd0ef1edf425e18e",
+        "missing_measurement_count": 1,
+        "missing_measurements": [
+          {
+            "date": "2026-09-24",
+            "variable": "precip_mm",
+            "previous_value": 0.0
+          }
+        ]
+      }
     ]
   }
 }
