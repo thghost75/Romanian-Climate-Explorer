@@ -31,6 +31,14 @@ TABLES = ('qc_exclusions', 'qc_counts', 'pressure_quarantine', 'daily_climatolog
           'precipitation_events', 'station_build')
 
 
+class SourceMeasurementLoss(ValueError):
+    """A well-formed download that would remove previously published values."""
+
+    def __init__(self, measurements):
+        self.measurements = measurements
+        super().__init__('Previously available measurements disappeared; retaining the published archive')
+
+
 def validate_replacement(previous, parsed, report, today):
     if report['rejected_rows'] or report['duplicate_dates'] or report['unexpected_dates']:
         raise ValueError('Invalid or ambiguous source rows; publication blocked')
@@ -40,10 +48,15 @@ def validate_replacement(previous, parsed, report, today):
     for row in rows.values():
         if row['date'] > today.isoformat() and any(row[v] is not None for v in VARIABLES):
             raise ValueError('Future dated measurements; publication blocked')
+    missing = []
     for old in previous:
         new = rows.get(old['date'], {})
-        if any(old[v] is not None and new.get(v) is None for v in VARIABLES):
-            raise ValueError('Previously available measurements disappeared; manual review required')
+        for variable in VARIABLES:
+            if old[variable] is not None and new.get(variable) is None:
+                missing.append({'date': old['date'], 'variable': variable,
+                                'previous_value': old[variable]})
+    if missing:
+        raise SourceMeasurementLoss(missing)
 
 
 def update_station_summary(db, sid):
@@ -109,8 +122,11 @@ def run(root, today=None):
         raise ValueError('Use a disposable copy with a .daily-refresh-workspace marker')
     today = today or datetime.now(timezone.utc).date()
     prepare(root)
+    for name in ('refresh-result.json', 'refresh-diagnostics.json'):
+        (root / name).unlink(missing_ok=True)
     client = HttpClient(root, interval=1, timeout=45, retries=3)
     changed, checked = set(), 0
+    retained = []
     with closing(database.connect(root)) as source, closing(sqlite3.connect(root / 'climatology.sqlite')) as derived:
         derived.row_factory = sqlite3.Row
         policy = Policy(**json.loads(derived.execute("SELECT value FROM metadata WHERE key='policy'").fetchone()[0])).validate()
@@ -142,7 +158,23 @@ def run(root, today=None):
                 previous = [dict(r) for r in source.execute(
                     'SELECT date,' + ','.join(VARIABLES) + ' FROM daily_observations WHERE station_id=? AND date>=? AND date<?',
                     (sid, f'{year}-01-01', f'{year+1}-01-01'))]
-                validate_replacement(previous, parsed, report, today)
+                try:
+                    validate_replacement(previous, parsed, report, today)
+                except SourceMeasurementLoss as error:
+                    # Keep the entire published station/year, including its
+                    # checksum and provenance. Never mark this download ingested:
+                    # it must be compared again on every subsequent run.
+                    detail = {'station_id': sid, 'year': year,
+                              'reason': 'previous_measurements_missing',
+                              'published_sha256': previous_archive[0] if previous_archive else None,
+                              'downloaded_sha256': sha256(path),
+                              'missing_measurement_count': len(error.measurements),
+                              'missing_measurements': error.measurements}
+                    retained.append(detail)
+                    atomic_json(root / 'refresh-diagnostics.json', {'retained_archives': retained})
+                    print(f'::warning::Retaining {sid}/{year}: {len(error.measurements)} '
+                          'previous measurements missing from ANM; other archives continue.', flush=True)
+                    continue
                 result = database.ingest(root, sid, year, path, parsed, report)
                 if result['status'] == 'ingested':
                     changed.add(sid)
@@ -162,7 +194,8 @@ def run(root, today=None):
                 for key, value in {
                     'source_sha256': source_digest, 'completed_at': datetime.now(timezone.utc).isoformat(),
                     'daily_refresh': {'changed_stations': len(changed), 'checked_archives': checked,
-                                      'checked_years': [today.year-1, today.year]},
+                                      'checked_years': [today.year-1, today.year],
+                                      'retained_archives': retained},
                     'validation': {'passed': True, 'integrity_check': 'ok', 'qc_accounting': True},
                 }.items():
                     derived.execute('INSERT OR REPLACE INTO metadata VALUES (?,?)', (key, dumps(value)))
@@ -173,7 +206,9 @@ def run(root, today=None):
     status = {'changed': bool(changed), 'checked_at': datetime.now(timezone.utc).isoformat(),
               'latest_observation': latest, 'station_count': len(station_ids),
               'changed_stations': len(changed), 'checked_archives': checked,
-              'checked_years': [today.year-1, today.year]}
+              'checked_years': [today.year-1, today.year],
+              'status': 'updated_with_retained_archives' if retained else 'ok',
+              'retained_archives': retained}
     atomic_json(root / 'refresh-result.json', status)
     print(json.dumps(status), flush=True)
     return status

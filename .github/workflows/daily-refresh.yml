@@ -60,6 +60,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: refresh-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
-          path: data/anm/refresh-result.json
+          path: |
+            data/anm/refresh-result.json
+            data/anm/refresh-diagnostics.json
           if-no-files-found: ignore
           retention-days: 14

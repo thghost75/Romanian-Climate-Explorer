@@ -1,7 +1,7 @@
 # Daily observations update
 
 The public repository runs **Refresh daily ANM observations** in GitHub Actions
-at **05:23 UTC every day** (08:23 in Romanian summer time, 07:23 in winter).
+at **03:17, 09:17, 15:17 and 21:17 UTC every day**.
 GitHub may delay scheduled jobs; this is a daily check, not an exact publication
 time or a guarantee that ANM has published yesterday's observations.
 
@@ -13,7 +13,12 @@ Each run:
 1. Tests the updater and downloads the last checksum-verified snapshot.
 2. Fetches ANM's current and previous calendar-year archives for the existing
    160 stations, sequentially with at least one second between requests.
-3. Rejects invalid keys, future measurements and losses of existing measurements.
+3. Rejects invalid keys and future measurements. If an otherwise valid download
+   removes published measurements, keeps that station/year's last published
+   archive and continues checking the others. Its checksum and provenance stay
+   unchanged, so future runs retry it automatically. Missing values are listed
+   in the run summary, release metadata and downloadable diagnostics; a
+   successful run with retained archives does not mean every station is current.
    Suspect finite measurements retain the existing variable-level QC policy.
 4. Rebuilds all products for changed stations from their full history: records,
    QC exclusions, normals, monthly/annual summaries, indices and events.
@@ -64,8 +69,11 @@ unchanged for that long, re-enable the workflow in Actions.
 
 ## Recovery
 
-For a transient ANM or network failure, rerun the workflow. For source losses or
-format changes, inspect the failed step before changing validation rules. To roll
+For a transient ANM or network failure, rerun the workflow. Source measurement
+losses are isolated per station/year and retried without stopping other updates.
+If ANM intentionally withdrew a value, review the diagnostic before deciding
+whether to accept that deletion; this updater never accepts deletions automatically.
+For format changes, inspect the failed step before changing validation rules. To roll
 back the public site, promote the previous successful deployment in Vercel; to
 roll back future builds, restore the matching earlier manifest and public status
 file in Git. Never overwrite an existing release's database attachments.

@@ -128,3 +128,64 @@ class DailyRefreshTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'listing format'):
                 run(self.root, TODAY)
         self.assertFalse((self.root / 'refresh-result.json').exists())
+
+    def test_missing_rainfall_retains_archive_while_other_station_updates_and_retries(self):
+        other = '0-20000-0-15387'
+        (self.root / '.daily-refresh-workspace').touch()
+
+        def write_download(station, rows):
+            path = self.root / 'raw' / station / f'{station}_2026.zip'
+            path.parent.mkdir(parents=True, exist_ok=True)
+            content = 'wsi,an,luna,zi,ff,p,r,ta,tn,tx\n'
+            for day, rain in rows:
+                content += f'{station},2026,9,{day},2,1010,{rain},10,5,20\n'
+            with ZipFile(path, 'w') as archive:
+                archive.writestr(f'{station}_2026_09.csv', content)
+            atomic_json(path.with_suffix('.zip.json'),
+                        {'url': archive_url(station, 2026), 'sha256': sha256(path)})
+            return path
+
+        baseline = write_download(other, [(18, 0)])
+        parsed = parse_archive(baseline, other, 2026)
+        database.ingest(self.root, other, 2026, baseline, parsed, summarize(parsed, other, 2026))
+        with closing(database.connect(self.root)) as source, closing(sqlite3.connect(self.root / 'climatology.sqlite')) as derived:
+            for station in (SID, other):
+                with source:
+                    update_station_summary(source, station)
+                refresh_products(source, derived, station, Policy())
+            old_row = dict(source.execute('SELECT * FROM daily_observations WHERE station_id=?', (other,)).fetchone())
+            old_digest = source.execute('SELECT sha256 FROM archives WHERE station_id=?', (other,)).fetchone()[0]
+            old_products = derived.execute('SELECT data_json FROM daily_records WHERE station_id=? ORDER BY calendar_day', (other,)).fetchall()
+
+        missing = True
+        def download_again(root, client, station, year):
+            return write_download(station, [(18, '' if missing else 0), (19, 3)]
+                                  if station == other else [(18, 1), (19, 5)])
+        def listing(url):
+            station = url.rstrip('/').split('/')[-1]
+            return f'<a href="{station}_2026.zip">2026</a>'.encode()
+
+        with patch('scripts.refresh_daily.HttpClient') as http, patch('scripts.refresh_daily.download', side_effect=download_again):
+            http.return_value.get.side_effect = listing
+            result = run(self.root, TODAY)
+            self.assertTrue(result['changed'])
+            self.assertEqual(result['changed_stations'], 1)
+            retained = result['retained_archives'][0]
+            self.assertEqual(retained['station_id'], other)
+            self.assertEqual(retained['missing_measurements'],
+                             [{'date': '2026-09-18', 'variable': 'precip_mm', 'previous_value': 0.0}])
+            with closing(database.connect(self.root)) as source, closing(sqlite3.connect(self.root / 'climatology.sqlite')) as derived:
+                self.assertEqual(dict(source.execute('SELECT * FROM daily_observations WHERE station_id=?', (other,)).fetchone()), old_row)
+                self.assertEqual(source.execute('SELECT sha256 FROM archives WHERE station_id=?', (other,)).fetchone()[0], old_digest)
+                self.assertEqual(source.execute('SELECT count(*) FROM daily_observations WHERE station_id=?', (other,)).fetchone()[0], 1)
+                self.assertEqual(source.execute('SELECT last_observation FROM stations WHERE station_id=?', (SID,)).fetchone()[0], '2026-09-19')
+                self.assertEqual(derived.execute('SELECT data_json FROM daily_records WHERE station_id=? ORDER BY calendar_day', (other,)).fetchall(), old_products)
+            # An identical bad source is rechecked, not accepted by checksum.
+            repeated = run(self.root, TODAY)
+            self.assertEqual(len(repeated['retained_archives']), 1)
+            missing = False
+            repaired = run(self.root, TODAY)
+            self.assertEqual(repaired['retained_archives'], [])
+            self.assertFalse((self.root / 'refresh-diagnostics.json').exists())
+            with closing(database.connect(self.root)) as source:
+                self.assertEqual(source.execute('SELECT last_observation FROM stations WHERE station_id=?', (other,)).fetchone()[0], '2026-09-19')
