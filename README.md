@@ -6,6 +6,20 @@ historical records, daily weather charts and extreme-event candidates.
 The site includes the refreshed design and **© WxProbs** on every exported PNG
 and SVG chart. ANM attribution is retained separately.
 
+## National top tens
+
+**On this day**, **On this month** and **On this year** compare station records
+across Romania. The month and year views offer a selected year or all available
+years, with category filtering, tied-date details and CSV export. Each category
+lists up to ten stations, one extreme per station, numbered 1–10; equal station
+values are ordered by WIGOS ID. All dates tied at each station's extreme are kept.
+
+These are daily temperature, precipitation, mean-wind and sea-level-pressure
+extremes within the chosen period, not monthly/yearly averages or rainfall totals.
+The existing variable quality checks apply. Coverage varies, and recent years
+may be incomplete. Vercel builds a compact ranking index with each data deployment
+so requests do not rescan the full archive.
+
 ## Deploy from GitHub to Vercel
 
 Start with **[DEPLOY.md](DEPLOY.md)**. This repository contains the application

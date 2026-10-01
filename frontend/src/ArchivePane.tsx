@@ -7,6 +7,6 @@ export function ArchivePane({state,onChange}:{state:ArchiveState;onChange:(chang
  const engine=useRef<ReturnType<typeof mountArchive>|null>(null);
  const callback=useRef(onChange);callback.current=onChange;
  useEffect(()=>{engine.current=mountArchive(ref.current!,change=>callback.current(change));return()=>{engine.current?.destroy();engine.current=null;};},[]);
- useEffect(()=>{void engine.current?.update(state);},[state.station,state.tab,state.year,state.month,state.day,state.normal]);
+ useEffect(()=>{void engine.current?.update(state);},[state.station,state.tab,state.year,state.month,state.day,state.normal,state.nationalPeriodYear]);
  return <div ref={ref} className="climate-app archive-pane" aria-label="Historical climate archive"/>;
 }

@@ -21,12 +21,13 @@ def empty():
                                          for label, _, _ in RECORDS}}
 
 
-def aggregate(source, products, scope=None, key=None):
+def aggregate(source, products, scope=None, key=None, station_ids=None, include_days=True):
     """Build all periods once, or a single period for an unprepared local archive."""
     buckets = {}
     variables = list(dict.fromkeys(variable for _, variable, _ in RECORDS))
     positions = [(label, variables.index(variable)+1, variable, op == 'min') for label, variable, op in RECORDS]
-    for (station,) in source.execute('SELECT station_id FROM stations ORDER BY station_id'):
+    stations = station_ids if station_ids is not None else [r[0] for r in source.execute('SELECT station_id FROM stations ORDER BY station_id')]
+    for station in stations:
         exclusions = {(r[0], r[1]) for r in products.execute(
             'SELECT date,variable FROM qc_exclusions WHERE station_id=?', (station,))}
         sql = 'SELECT date,' + ','.join(variables) + ' FROM daily_observations WHERE station_id=?'
@@ -39,7 +40,7 @@ def aggregate(source, products, scope=None, key=None):
             args.extend((len(key), key))
         for row in source.execute(sql + ' ORDER BY date', args):
             when = row[0]
-            keys = [(scope, key)] if scope else [('day', when[5:]), ('month-year', when[:7])]
+            keys = [(scope, key)] if scope else ([('day', when[5:])] if include_days else []) + [('month-year', when[:7])]
             targets = []
             for bucket_key in keys:
                 if bucket_key not in buckets: buckets[bucket_key] = empty()
@@ -85,11 +86,42 @@ def aggregate(source, products, scope=None, key=None):
     return buckets
 
 
+def station_highlights(source, products, scope=None, key=None):
+    """One extreme per station/category, with ten stations per period.
+
+    Roll up each station before ranking: one station must not fill multiple
+    places with different dates or years. Retain all dates tied at its extreme.
+    Bounded national lists keep the serving index small.
+    """
+    buckets = {}
+    for (station,) in source.execute('SELECT station_id FROM stations ORDER BY station_id'):
+        periods = aggregate(source, products, scope, key, [station], include_days=False)
+        for period_key, data in periods.items():
+            target = buckets.setdefault(period_key, {'station_count': 0, 'records': {k: [] for k, _, _ in RECORDS}})
+            target['station_count'] += data['station_count']
+            for label, record in data['records'].items():
+                if record['value'] is None:
+                    continue
+                ranking = target['records'][label]
+                ranking.append({'station_id': station, 'record_type': label,
+                                'value': record['value'], 'sample_count': record['sample_count'],
+                                'dates': [when for _, when in record['holders']]})
+                ranking.sort(key=lambda r: (r['value'] if label.startswith('lowest') else -r['value'], r['station_id']))
+                del ranking[10:]
+    return buckets
+
+
 def build_index(source, products):
     buckets = aggregate(source, products)
     products.execute('CREATE TABLE national_records (scope TEXT, period TEXT, data_json TEXT NOT NULL, PRIMARY KEY(scope,period)) WITHOUT ROWID')
     products.executemany('INSERT INTO national_records VALUES (?,?,?)',
                          ((scope, key, json.dumps(data, separators=(',', ':'), allow_nan=False))
                           for (scope, key), data in buckets.items()))
+    products.commit()
+    highlights = station_highlights(source, products)
+    products.execute('CREATE TABLE national_station_rankings (scope TEXT, period TEXT, data_json TEXT NOT NULL, PRIMARY KEY(scope,period)) WITHOUT ROWID')
+    products.executemany('INSERT INTO national_station_rankings VALUES (?,?,?)',
+                         ((scope, key, json.dumps(data, separators=(',', ':'), allow_nan=False))
+                          for (scope, key), data in highlights.items()))
     products.commit()
     return len(buckets)

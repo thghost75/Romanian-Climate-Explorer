@@ -325,6 +325,35 @@ class Explorer:
                 'month':int(month) if scope in ('day','month','month-year') else None,
                 'first_year':first, 'last_year':last, 'network_station_count':len(self.stations),
                 'qc_policy':'Extremes across the stations available in this archive, not a national average or a certified list of official Romanian records. Variable quality checks apply; all tied stations and dates are retained. Coverage varies by period.'}
+    def national_highlights(self, scope='month', month=1, year=None):
+        from .national_records import station_highlights, period
+        if scope not in ('month', 'month-year', 'year', 'all'):
+            raise ValueError('National highlights scope must be month, month-year, year or all')
+        year = self.year(year if year is not None else date.today().year)
+        month = int(month)
+        key, label = period(scope, month, 1, year)
+        first = min(s['first_year'] for s in self.stations.values())
+        last = max(s['last_year'] for s in self.stations.values())
+        if scope in ('year', 'month-year') and not first <= year <= last:
+            raise ValueError('Year is outside the national archive')
+        indexed = self.products.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='national_station_rankings'").fetchone()
+        if indexed:
+            row = self.products.db.execute('SELECT data_json FROM national_station_rankings WHERE scope=? AND period=?', (scope,key)).fetchone()
+            data = json.loads(row[0]) if row else {'station_count':0, 'records':{}}
+        else:
+            data = station_highlights(self.source, self.products.db, scope, key).get((scope,key), {'station_count':0, 'records':{}})
+        rows = []
+        for kind in RECORD_VARIABLES:
+            for rank, record in enumerate(data['records'].get(kind, []), 1):
+                sid = record['station_id']
+                rows.append({**self.annotate_record(sid, record, RECORD_VARIABLES[kind]),
+                             'rank': rank, 'station_id': sid, 'station_name': self.stations[sid]['station_name']})
+        return {'scope':scope, 'period_label':label, 'records':rows, 'limit':10,
+                'station_count':data['station_count'], 'network_station_count':len(self.stations),
+                'first_year':first, 'last_year':last,
+                'year':year if scope in ('year','month-year') else None,
+                'month':month if scope in ('month','month-year') else None}
+
     def series(self, station, normal):
         s = self.station(station); self.normal(normal)
         return {"station_id":station,"normal":normal,"annual_anomaly_normal":self.products.policy["normal"],
@@ -423,12 +452,11 @@ class Explorer:
         self.products.day(int(month),int(day))
         rows=[]
         for sid in self.stations:
-            # This national ranking needs only the three established categories.
-            record=self.products.get_daily_records(sid,int(month),int(day))
-            for key in ("highest_tmax","lowest_tmin","highest_precip"):
+            # records() also supplies categories absent from older snapshots.
+            record=self.records(sid,"day",int(month),int(day))
+            for key in RECORD_VARIABLES:
                 r=record["records"].get(key)
                 if r and r.get('value') is not None:
-                    r=self.annotate_record(sid,r,RECORD_VARIABLES[key])
                     rows.append({"station_id":sid,"station_name":self.stations[sid]["station_name"],"record_type":key,**r})
         key=self.products.day(int(month),int(day))
         rain=[]
@@ -479,6 +507,7 @@ class Explorer:
         if endpoint=="records": return self.records(station,get("scope","day"),month,day,year)
         if endpoint=="station-rankings": return self.station_rankings(station,get('kind','lowest_tmin'),get('scope','month'),month,day,year)
         if endpoint=="national-records": return self.national_records(get("scope","day"),month,day,year)
+        if endpoint=="national-highlights": return self.national_highlights(get("scope","month"),month,year)
         if endpoint in ("temperature","rainfall"):
             data=self.series(station,normal)
             keep={"tmean_c","tmin_c","tmax_c"} if endpoint=="temperature" else {"precip_mm"}
