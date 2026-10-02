@@ -7,6 +7,15 @@ Keep these fallbacks with the application so daily observation snapshots cannot
 erase them. Preserve metadata supplied by the snapshot whenever it is available.
 """
 
+import json
+from pathlib import Path
+
+_ELEVATIONS = json.loads(Path(__file__).with_name('station_elevations.json').read_text(encoding='utf-8'))['stations']
+
+
+def resolve_station_elevation(station_id, elevation):
+    return elevation if elevation is not None else _ELEVATIONS.get(station_id, {}).get('elevation_m')
+
 WMO_STATION_NAMES = {
     "0-20000-0-15000": "DARABANI",
     "0-20000-0-15004": "SIGHETUL MARMATIEI",

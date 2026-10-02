@@ -163,3 +163,20 @@ coordinate pairs take precedence. The fallbacks persist across daily data
 refreshes. WMO coordinates describe registry locations, not historical station
 relocations; observation data is unchanged. Map counts and availability messages
 are calculated from the catalogue rather than fixed in the interface.
+
+National day, month and year rankings support **Per station** (one extreme per
+station, with every tied date) and **Per value** (ten individual daily observations,
+allowing repeated stations). Per-value ties are ordered by date, then station ID,
+and keep positions 1–10. CSV exports include the selected ranking and station group.
+
+**Flat stations** includes elevations at or below 800 m, except Voineasa
+(`0-20000-0-15319`), which is always excluded. Unknown elevations are excluded from
+this group, but remain in All stations. Filtering precedes the top-ten cutoff.
+Current station elevations for all 160 stations are preserved in
+`anm_climate/station_elevations.json`, retrieved from WMO OSCAR/Surface on
+2 October 2026. Two identifier aliases (Horezu 1550 and Constanta Dig) were verified
+by names and matching coordinates and are documented in that file. Snapshot
+elevations take precedence. These are current station elevations, not a history
+of station relocations. The present grouping is 135 flat and 25 excluded stations.
+Both ranking modes and groups are precomputed during each deployment to keep
+full-archive queries fast; the existing serving-size limit remains enforced.

@@ -1,0 +1,651 @@
+{
+  "source": "https://oscar.wmo.int/surface/rest/api/search/station?territoryName=ROU",
+  "retrieved": "2026-10-02",
+  "note": "Current WMO registry station elevations; not historical relocation heights. 158 exact WIGOS matches and two explicitly documented identifier aliases.",
+  "stations": {
+    "0-20000-0-15000": {
+      "name": "DARABANI",
+      "elevation_m": 259
+    },
+    "0-20000-0-15004": {
+      "name": "SIGHETUL MARMATIEI",
+      "elevation_m": 275
+    },
+    "0-20000-0-15007": {
+      "name": "RADAUTI",
+      "elevation_m": 389
+    },
+    "0-20000-0-15010": {
+      "name": "SATU MARE",
+      "elevation_m": 123
+    },
+    "0-20000-0-15014": {
+      "name": "BAIA MARE",
+      "elevation_m": 186.11
+    },
+    "0-20000-0-15015": {
+      "name": "OCNA SUGATAG",
+      "elevation_m": 503
+    },
+    "0-20000-0-15020": {
+      "name": "BOTOSANI",
+      "elevation_m": 161
+    },
+    "0-20000-0-15023": {
+      "name": "SUCEAVA",
+      "elevation_m": 352
+    },
+    "0-20000-0-15025": {
+      "name": "STANCA STEFANESTI",
+      "elevation_m": 110
+    },
+    "0-20000-0-15033": {
+      "name": "IEZER",
+      "elevation_m": 1785
+    },
+    "0-20000-0-15042": {
+      "name": "SACUIENI",
+      "elevation_m": 124
+    },
+    "0-20000-0-15044": {
+      "name": "SUPURU DE JOS",
+      "elevation_m": 159
+    },
+    "0-20000-0-15047": {
+      "name": "TARGU LAPUS",
+      "elevation_m": 363
+    },
+    "0-20000-0-15056": {
+      "name": "COTNARI",
+      "elevation_m": 289
+    },
+    "0-20000-0-15063": {
+      "name": "ZALAU",
+      "elevation_m": 295
+    },
+    "0-20000-0-15069": {
+      "name": "POIANA STAMPEI",
+      "elevation_m": 923
+    },
+    "0-20000-0-15073": {
+      "name": "TARGU NEAMT",
+      "elevation_m": 387
+    },
+    "0-20000-0-15080": {
+      "name": "ORADEA",
+      "elevation_m": 136
+    },
+    "0-20000-0-15083": {
+      "name": "DEJ",
+      "elevation_m": 232
+    },
+    "0-20000-0-15085": {
+      "name": "BISTRITA",
+      "elevation_m": 366
+    },
+    "0-20000-0-15088": {
+      "name": "CALIMANI RETITIS",
+      "elevation_m": 2022
+    },
+    "0-20000-0-15090": {
+      "name": "IASI",
+      "elevation_m": 74.29
+    },
+    "0-20000-0-15094": {
+      "name": "BARNOVA",
+      "elevation_m": 396
+    },
+    "0-20000-0-15095": {
+      "name": "BOROD",
+      "elevation_m": 333
+    },
+    "0-20000-0-15099": {
+      "name": "HUEDIN",
+      "elevation_m": 560
+    },
+    "0-20000-0-15107": {
+      "name": "TOPLITA",
+      "elevation_m": 687
+    },
+    "0-20000-0-15108": {
+      "name": "CEAHLAU TOACA",
+      "elevation_m": 1897
+    },
+    "0-20000-0-15109": {
+      "name": "PIATRA NEAMT",
+      "elevation_m": 360
+    },
+    "0-20000-0-15111": {
+      "name": "ROMAN",
+      "elevation_m": 216
+    },
+    "0-20000-0-15113": {
+      "name": "NEGRESTI",
+      "elevation_m": 133
+    },
+    "0-20000-0-15117": {
+      "name": "HOLOD",
+      "elevation_m": 163
+    },
+    "0-20000-0-15118": {
+      "name": "STANA DE VALE",
+      "elevation_m": 1111
+    },
+    "0-20000-0-15119": {
+      "name": "VLADEASA 1800",
+      "elevation_m": 1836
+    },
+    "0-20000-0-15120": {
+      "name": "CLUJ-NAPOCA",
+      "elevation_m": 410
+    },
+    "0-20000-0-15123": {
+      "name": "SARMASU",
+      "elevation_m": 399
+    },
+    "0-20000-0-15124": {
+      "name": "BATOS",
+      "elevation_m": 449
+    },
+    "0-20000-0-15127": {
+      "name": "JOSENI",
+      "elevation_m": 750
+    },
+    "0-20000-0-15136": {
+      "name": "CHISINEU-CRIS",
+      "elevation_m": 96
+    },
+    "0-20000-0-15138": {
+      "name": "DUMBRAVITA DE CODRU",
+      "elevation_m": 586
+    },
+    "0-20000-0-15143": {
+      "name": "TURDA",
+      "elevation_m": 427
+    },
+    "0-20000-0-15145": {
+      "name": "TARGU-MURES",
+      "elevation_m": 310
+    },
+    "0-20000-0-15148": {
+      "name": "BUCIN",
+      "elevation_m": 1282
+    },
+    "0-20000-0-15150": {
+      "name": "BACAU",
+      "elevation_m": 174
+    },
+    "0-20000-0-15154": {
+      "name": "VASLUI",
+      "elevation_m": 116
+    },
+    "0-20000-0-15160": {
+      "name": "STEI",
+      "elevation_m": 278
+    },
+    "0-20000-0-15162": {
+      "name": "CAMPENI",
+      "elevation_m": 591
+    },
+    "0-20000-0-15163": {
+      "name": "BAISOARA",
+      "elevation_m": 1360
+    },
+    "0-20000-0-15165": {
+      "name": "TARNAVENI",
+      "elevation_m": 523
+    },
+    "0-20000-0-15168": {
+      "name": "ODORHEIUL SECUIESC",
+      "elevation_m": 523
+    },
+    "0-20000-0-15170": {
+      "name": "MIERCUREA CIUC",
+      "elevation_m": 661
+    },
+    "0-20000-0-15179": {
+      "name": "SIRIA",
+      "elevation_m": 473
+    },
+    "0-20000-0-15182": {
+      "name": "GURAHONT",
+      "elevation_m": 177
+    },
+    "0-20000-0-15184": {
+      "name": "ROSIA MONTANA",
+      "elevation_m": 1196
+    },
+    "0-20000-0-15189": {
+      "name": "DUMBRAVENI",
+      "elevation_m": 318
+    },
+    "0-20000-0-15194": {
+      "name": "TARGU OCNA",
+      "elevation_m": 242
+    },
+    "0-20000-0-15197": {
+      "name": "BARLAD",
+      "elevation_m": 172
+    },
+    "0-20000-0-15199": {
+      "name": "SANNICOLAUL MARE",
+      "elevation_m": 85
+    },
+    "0-20000-0-15200": {
+      "name": "ARAD",
+      "elevation_m": 116.59
+    },
+    "0-20000-0-15204": {
+      "name": "VARADIA DE MURES",
+      "elevation_m": 156
+    },
+    "0-20000-0-15206": {
+      "name": "TEBEA",
+      "elevation_m": 273
+    },
+    "0-20000-0-15208": {
+      "name": "ALBA IULIA",
+      "elevation_m": 246
+    },
+    "0-20000-0-15209": {
+      "name": "BLAJ",
+      "elevation_m": 337
+    },
+    "0-20000-0-15215": {
+      "name": "BARAOLT",
+      "elevation_m": 508
+    },
+    "0-20000-0-15217": {
+      "name": "TARGU SECUIESC",
+      "elevation_m": 568
+    },
+    "0-20000-0-15219": {
+      "name": "ADJUD",
+      "elevation_m": 101
+    },
+    "0-20000-0-15230": {
+      "name": "DEVA",
+      "elevation_m": 240
+    },
+    "0-20000-0-15231": {
+      "name": "SEBES-ALBA",
+      "elevation_m": 271
+    },
+    "0-20000-0-15235": {
+      "name": "FAGARAS",
+      "elevation_m": 428
+    },
+    "0-20000-0-15238": {
+      "name": "SFANTU GHEORGHE COVASNA",
+      "elevation_m": 523
+    },
+    "0-20000-0-15245": {
+      "name": "JIMBOLIA",
+      "elevation_m": 79
+    },
+    "0-20000-0-15247": {
+      "name": "TIMISOARA",
+      "elevation_m": 86
+    },
+    "0-20000-0-15254": {
+      "name": "PALTINIS SIBIU",
+      "elevation_m": 1453
+    },
+    "0-20000-0-15260": {
+      "name": "SIBIU",
+      "elevation_m": 450
+    },
+    "0-20000-0-15261": {
+      "name": "INTORSURA BUZAULUI",
+      "elevation_m": 707
+    },
+    "0-20000-0-15262": {
+      "name": "LACAUTI",
+      "elevation_m": 1776
+    },
+    "0-20000-0-15264": {
+      "name": "FOCSANI",
+      "elevation_m": 57
+    },
+    "0-20000-0-15265": {
+      "name": "TECUCI",
+      "elevation_m": 60
+    },
+    "0-20000-0-15270": {
+      "name": "LUGOJ",
+      "elevation_m": 123
+    },
+    "0-20000-0-15277": {
+      "name": "BOITA",
+      "elevation_m": 518
+    },
+    "0-20000-0-15279": {
+      "name": "BALEA LAC",
+      "elevation_m": 2070
+    },
+    "0-20000-0-15280": {
+      "name": "VARFU OMU",
+      "elevation_m": 2504
+    },
+    "0-20000-0-15284": {
+      "name": "PENTELEU",
+      "elevation_m": 1632
+    },
+    "0-20000-0-15285": {
+      "name": "BISOCA",
+      "elevation_m": 850
+    },
+    "0-20000-0-15289": {
+      "name": "BANLOC",
+      "elevation_m": 83.4
+    },
+    "0-20000-0-15292": {
+      "name": "CARANSEBES",
+      "elevation_m": 241
+    },
+    "0-20000-0-15296": {
+      "name": "PETROSANI",
+      "elevation_m": 607
+    },
+    "0-20000-0-15297": {
+      "name": "OBARSIA LOTRULUI",
+      "elevation_m": 1348
+    },
+    "0-20000-0-15300": {
+      "name": "BRASOV-GHIMBAV",
+      "elevation_m": 534
+    },
+    "0-20000-0-15301": {
+      "name": "FUNDATA",
+      "elevation_m": 1384
+    },
+    "0-20000-0-15302": {
+      "name": "PREDEAL",
+      "elevation_m": 1090
+    },
+    "0-20000-0-15307": {
+      "name": "RAMNICU SARAT",
+      "elevation_m": 152
+    },
+    "0-20000-0-15310": {
+      "name": "GALATI",
+      "elevation_m": 69
+    },
+    "0-20000-0-15314": {
+      "name": "RESITA",
+      "elevation_m": 279
+    },
+    "0-20000-0-15315": {
+      "name": "SEMENIC",
+      "elevation_m": 1432
+    },
+    "0-20000-0-15316": {
+      "name": "CUNTU",
+      "elevation_m": 1456
+    },
+    "0-20000-0-15317": {
+      "name": "TARCU",
+      "elevation_m": 2180
+    },
+    "0-20000-0-15319": {
+      "name": "VOINEASA",
+      "elevation_m": 573
+    },
+    "0-20000-0-15320": {
+      "name": "PARANG",
+      "elevation_m": 1548
+    },
+    "0-20000-0-15324": {
+      "name": "CAMPULUNG MUSCEL",
+      "elevation_m": 680.7
+    },
+    "0-20000-0-15325": {
+      "name": "SINAIA 1500",
+      "elevation_m": 1510
+    },
+    "0-20000-0-15328": {
+      "name": "PATARLAGELE",
+      "elevation_m": 289
+    },
+    "0-20000-0-15333": {
+      "name": "BRAILA",
+      "elevation_m": 14.52
+    },
+    "0-20000-0-15335": {
+      "name": "TULCEA",
+      "elevation_m": 4.36
+    },
+    "0-20000-0-15336": {
+      "name": "GORGOVA",
+      "elevation_m": 1
+    },
+    "0-20000-0-15337": {
+      "name": "MAHMUDIA",
+      "elevation_m": 167.53
+    },
+    "0-20000-0-15338": {
+      "name": "ORAVITA",
+      "elevation_m": 309
+    },
+    "0-20000-0-15340": {
+      "name": "TARGU-JIU",
+      "elevation_m": 204.26
+    },
+    "0-20000-0-15341": {
+      "name": "APA NEAGRA",
+      "elevation_m": 250
+    },
+    "0-20000-0-15343": {
+      "name": "HOREZU 1550",
+      "elevation_m": 1555.47,
+      "registry_wigos_id": "0-642-20000-15343",
+      "match_note": "Archive identifier uses a different prefix. Verified by station name and matching coordinates (within 20 metres)."
+    },
+    "0-20000-0-15344": {
+      "name": "POLOVRAGI",
+      "elevation_m": 531
+    },
+    "0-20000-0-15345": {
+      "name": "MORARESTI",
+      "elevation_m": 548
+    },
+    "0-20000-0-15346": {
+      "name": "RAMNICU VALCEA",
+      "elevation_m": 237
+    },
+    "0-20000-0-15347": {
+      "name": "CURTEA DE ARGES",
+      "elevation_m": 448
+    },
+    "0-20000-0-15349": {
+      "name": "CAMPINA",
+      "elevation_m": 461
+    },
+    "0-20000-0-15350": {
+      "name": "BUZAU",
+      "elevation_m": 97
+    },
+    "0-20000-0-15360": {
+      "name": "SULINA",
+      "elevation_m": 12.69
+    },
+    "0-20000-0-15364": {
+      "name": "BOZOVICI",
+      "elevation_m": 256
+    },
+    "0-20000-0-15366": {
+      "name": "BAILE HERCULANE",
+      "elevation_m": 190
+    },
+    "0-20000-0-15369": {
+      "name": "TARGU LOGRESTI",
+      "elevation_m": 262
+    },
+    "0-20000-0-15373": {
+      "name": "PITESTI",
+      "elevation_m": 316
+    },
+    "0-20000-0-15375": {
+      "name": "TARGOVISTE",
+      "elevation_m": 296.49
+    },
+    "0-20000-0-15377": {
+      "name": "PLOIESTI",
+      "elevation_m": 177
+    },
+    "0-20000-0-15387": {
+      "name": "SFANTU GHEORGHE DELTA",
+      "elevation_m": 1.43
+    },
+    "0-20000-0-15388": {
+      "name": "MOLDOVA VECHE",
+      "elevation_m": 82
+    },
+    "0-20000-0-15395": {
+      "name": "DRAGASANI",
+      "elevation_m": 280
+    },
+    "0-20000-0-15402": {
+      "name": "URZICENI",
+      "elevation_m": 60
+    },
+    "0-20000-0-15405": {
+      "name": "GRIVITA",
+      "elevation_m": 50
+    },
+    "0-20000-0-15406": {
+      "name": "HARSOVA",
+      "elevation_m": 37.51
+    },
+    "0-20000-0-15408": {
+      "name": "CORUGEA",
+      "elevation_m": 219.2
+    },
+    "0-20000-0-15409": {
+      "name": "JURILOVCA",
+      "elevation_m": 37.65
+    },
+    "0-20000-0-15410": {
+      "name": "DROBETA-TURNU SEVERIN",
+      "elevation_m": 77
+    },
+    "0-20000-0-15412": {
+      "name": "BACLES",
+      "elevation_m": 313
+    },
+    "0-20000-0-15416": {
+      "name": "STOLNICI",
+      "elevation_m": 208.72
+    },
+    "0-20000-0-15419": {
+      "name": "TITU",
+      "elevation_m": 159.03
+    },
+    "0-20000-0-15420": {
+      "name": "BUCURESTI BANEASA",
+      "elevation_m": 90
+    },
+    "0-20000-0-15421": {
+      "name": "BUCURESTI AFUMATI",
+      "elevation_m": 90
+    },
+    "0-20000-0-15422": {
+      "name": "BUCURESTI FILARET",
+      "elevation_m": 82
+    },
+    "0-20000-0-15425": {
+      "name": "SLOBOZIA",
+      "elevation_m": 51.18
+    },
+    "0-20000-0-15428": {
+      "name": "GURA PORTITEI",
+      "elevation_m": 2
+    },
+    "0-20000-0-15434": {
+      "name": "SLATINA",
+      "elevation_m": 172
+    },
+    "0-20000-0-15444": {
+      "name": "FETESTI",
+      "elevation_m": 58.25
+    },
+    "0-20000-0-15445": {
+      "name": "CERNAVODA",
+      "elevation_m": 87.17
+    },
+    "0-20000-0-15450": {
+      "name": "CRAIOVA",
+      "elevation_m": 192
+    },
+    "0-20000-0-15455": {
+      "name": "VIDELE",
+      "elevation_m": 106.18
+    },
+    "0-20000-0-15460": {
+      "name": "CALARASI",
+      "elevation_m": 18.72
+    },
+    "0-20000-0-15462": {
+      "name": "MEDGIDIA",
+      "elevation_m": 69.54
+    },
+    "0-20000-0-15465": {
+      "name": "BAILESTI",
+      "elevation_m": 57
+    },
+    "0-20000-0-15469": {
+      "name": "CARACAL",
+      "elevation_m": 106
+    },
+    "0-20000-0-15470": {
+      "name": "ROSIORII DE VEDE",
+      "elevation_m": 102.15
+    },
+    "0-20000-0-15475": {
+      "name": "OLTENITA",
+      "elevation_m": 14.9
+    },
+    "0-20000-0-15479": {
+      "name": "ADAMCLISI",
+      "elevation_m": 158
+    },
+    "0-20000-0-15480": {
+      "name": "CONSTANTA",
+      "elevation_m": 12.8
+    },
+    "0-20000-0-15482": {
+      "name": "CALAFAT",
+      "elevation_m": 61
+    },
+    "0-20000-0-15483": {
+      "name": "CONSTANTA DIG",
+      "elevation_m": 0,
+      "registry_wigos_id": "0-642-20000-15483",
+      "match_note": "Archive identifier uses a different prefix. Verified by station name and matching coordinates (within 20 metres)."
+    },
+    "0-20000-0-15489": {
+      "name": "ALEXANDRIA",
+      "elevation_m": 75.46
+    },
+    "0-20000-0-15490": {
+      "name": "TURNU-MAGURELE",
+      "elevation_m": 30.64
+    },
+    "0-20000-0-15491": {
+      "name": "GIURGIU",
+      "elevation_m": 23.6
+    },
+    "0-20000-0-15494": {
+      "name": "BECHET",
+      "elevation_m": 36
+    },
+    "0-20000-0-15498": {
+      "name": "ZIMNICEA",
+      "elevation_m": 33.63
+    },
+    "0-20000-0-15499": {
+      "name": "MANGALIA",
+      "elevation_m": 6
+    }
+  }
+}

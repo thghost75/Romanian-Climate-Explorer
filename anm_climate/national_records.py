@@ -1,9 +1,11 @@
 """Compact national extremes, retaining every tied station/date and variable QC."""
 import json
 import math
+from bisect import insort
 from datetime import date
 
 from .phase3_products import RECORDS
+from .station_metadata import resolve_station_elevation
 
 
 def period(scope, month, day, year):
@@ -21,7 +23,7 @@ def empty():
                                          for label, _, _ in RECORDS}}
 
 
-def aggregate(source, products, scope=None, key=None, station_ids=None, include_days=True):
+def aggregate(source, products, scope=None, key=None, station_ids=None, include_days=True, include_values=False):
     """Build all periods once, or a single period for an unprepared local archive."""
     buckets = {}
     variables = list(dict.fromkeys(variable for _, variable, _ in RECORDS))
@@ -53,6 +55,12 @@ def aggregate(source, products, scope=None, key=None, station_ids=None, include_
                     target['stations'].add(station)
                     record = target['records'][label]
                     record['sample_count'] += 1
+                    if include_values:
+                        values = record.setdefault('top_values', [])
+                        candidate = (value if lowest else -value, when)
+                        if len(values) < 10 or candidate < values[-1]:
+                            insort(values, candidate)
+                            del values[10:]
                     old = record['value']
                     if old is None or (value < old if lowest else value > old):
                         record['value'] = value
@@ -72,6 +80,8 @@ def aggregate(source, products, scope=None, key=None, station_ids=None, include_
                 for label, record in data['records'].items():
                     merged = target['records'][label]
                     merged['sample_count'] += record['sample_count']
+                    if include_values:
+                        merged['top_values'] = sorted(merged.get('top_values', []) + record.get('top_values', []))[:10]
                     value, old = record['value'], merged['value']
                     if value is None: continue
                     if old is None or (value < old if label.startswith('lowest') else value > old):
@@ -111,6 +121,58 @@ def station_highlights(source, products, scope=None, key=None):
     return buckets
 
 
+def is_flat_station(station):
+    """User-defined lowland group; unknown elevations are not assumed flat."""
+    elevation = resolve_station_elevation(station['station_id'], station.get('elevation_m'))
+    return (station['station_id'] != '0-20000-0-15319'
+            and elevation is not None and math.isfinite(elevation) and elevation <= 800)
+
+
+def ranked_highlights(source, products, scope=None, key=None, ranking=None, station_group=None):
+    """Bounded rankings for both modes/groups, using a single scan per station.
+
+    Ten candidates from each disjoint month/year are sufficient for every
+    rolled-up top ten. Filtering happens before merging, never after truncation.
+    """
+    buckets = {}
+    cursor = source.execute('SELECT * FROM stations ORDER BY station_id')
+    columns = [column[0] for column in cursor.description]
+    stations = [dict(zip(columns, row)) for row in cursor]
+    for station in stations:
+        sid = station['station_id']
+        groups = ['all'] + (['flat'] if is_flat_station(station) else [])
+        if station_group is not None:
+            groups = [group for group in groups if group == station_group]
+        if not groups:
+            continue
+        periods = aggregate(source, products, scope, key, [sid], include_values=ranking != 'station')
+        for period_key, data in periods.items():
+            for mode in ([ranking] if ranking else ['station', 'value']):
+                for group in groups:
+                    target = buckets.setdefault((*period_key, mode, group),
+                        {'station_count': 0, 'records': {label: [] for label, _, _ in RECORDS}})
+                    target['station_count'] += data['station_count']
+                    for label, record in data['records'].items():
+                        if record['value'] is None:
+                            continue
+                        if mode == 'station':
+                            candidates = [{'station_id': sid, 'record_type': label, 'value': record['value'],
+                                           'sample_count': record['sample_count'],
+                                           'dates': [when for _, when in record['holders']]}]
+                        else:
+                            candidates = [{'station_id': sid, 'record_type': label,
+                                           'value': value if label.startswith('lowest') else -value,
+                                           'sample_count': 1, 'dates': [when]}
+                                          for value, when in record.get('top_values', [])]
+                        rows = target['records'][label]
+                        rows.extend(candidates)
+                        rows.sort(key=lambda r: (r['value'] if label.startswith('lowest') else -r['value'],
+                                                 *( (r['dates'][0], r['station_id']) if mode == 'value'
+                                                    else (r['station_id'],) )))
+                        del rows[10:]
+    return buckets
+
+
 def build_index(source, products):
     buckets = aggregate(source, products)
     products.execute('CREATE TABLE national_records (scope TEXT, period TEXT, data_json TEXT NOT NULL, PRIMARY KEY(scope,period)) WITHOUT ROWID')
@@ -118,10 +180,10 @@ def build_index(source, products):
                          ((scope, key, json.dumps(data, separators=(',', ':'), allow_nan=False))
                           for (scope, key), data in buckets.items()))
     products.commit()
-    highlights = station_highlights(source, products)
-    products.execute('CREATE TABLE national_station_rankings (scope TEXT, period TEXT, data_json TEXT NOT NULL, PRIMARY KEY(scope,period)) WITHOUT ROWID')
-    products.executemany('INSERT INTO national_station_rankings VALUES (?,?,?)',
-                         ((scope, key, json.dumps(data, separators=(',', ':'), allow_nan=False))
-                          for (scope, key), data in highlights.items()))
+    highlights = ranked_highlights(source, products)
+    products.execute('CREATE TABLE national_rankings (scope TEXT, period TEXT, ranking TEXT, station_group TEXT, data_json TEXT NOT NULL, PRIMARY KEY(scope,period,ranking,station_group)) WITHOUT ROWID')
+    products.executemany('INSERT INTO national_rankings VALUES (?,?,?,?,?)',
+                         ((*key, json.dumps(data, separators=(',', ':'), allow_nan=False))
+                          for key, data in highlights.items()))
     products.commit()
     return len(buckets)

@@ -65,7 +65,7 @@ class NationalRecordTests(RecordPeriodTests):
         self.assertEqual(self.api.national_highlights('year',1,2020)['station_count'],1)
         with self.assertRaises(ValueError):self.api.national_highlights('year',1,1900)
         with self.assertRaises(ValueError):self.api.national_highlights('month',13)
-        with self.assertRaises(ValueError):self.api.national_highlights('day',1)
+        with self.assertRaises(ValueError):self.api.national_highlights('invalid',1)
 
     def test_day_highlights_supply_categories_missing_from_legacy_products(self):
         self.api.products.db.execute('CREATE TABLE precipitation_events (station_id,precip_mm,date,data_json)')
@@ -102,6 +102,49 @@ class NationalRecordTests(RecordPeriodTests):
         self.assertEqual([r['station_id'] for r in wind],[f'station-{i:02d}' for i in range(10)])
         build_index(self.api.source,self.api.products.db)
         self.assertEqual(result,self.api.national_highlights('month-year',1,2024))
+
+    def test_value_ranking_filters_before_cutoff_and_index_parity(self):
+        self.api.source.execute('ALTER TABLE stations ADD COLUMN elevation_m REAL')
+        stations = [('low',100),('boundary',800),('high',800.1),('unknown',None),
+                    ('0-20000-0-15319',573)]
+        for sid, elevation in stations:
+            self.api.source.execute('INSERT INTO stations VALUES (?,?)',(sid,elevation))
+            self.api.stations[sid]={**self.api.stations['test'],'station_id':sid,'station_name':sid,'elevation_m':elevation}
+            for day in range(1,13):
+                value = 50 if sid in ('high','unknown','0-20000-0-15319') else 20
+                self.api.source.execute('INSERT INTO daily_observations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                    (sid,f'2024-01-{day:02d}',value,value,value,value,0,value,value,1000+value,'[]','fixture.csv',day))
+        self.api.products.db.execute("INSERT INTO qc_exclusions VALUES ('boundary','2024-01-01','tmax_c','exclude')")
+        cases=[(scope,1,2024,mode,group,1) for scope in ('day','month','month-year','year','all')
+               for mode in ('station','value') for group in ('all','flat')]
+        expected=[self.api.national_highlights(*args) for args in cases]
+        flat=self.api.dispatch('national-highlights',{'scope':'month-year','month':'1','year':'2024','ranking':'value','station_group':'flat'})
+        rows=[r for r in flat['records'] if r['record_type']=='highest_tmax']
+        self.assertEqual(len(rows),10)
+        self.assertEqual([r['rank'] for r in rows],list(range(1,11)))
+        self.assertEqual({r['station_id'] for r in rows},{'low','boundary'})
+        self.assertTrue(all(r['value']==20 and len(r['dates'])==1 for r in rows))
+        self.assertEqual((rows[0]['station_id'],rows[0]['dates']),('low',['2024-01-01']))
+        self.assertEqual(flat['station_count'],2)
+        # All tied daily values remain separate observations; only ten are displayed.
+        all_stations=self.api.national_highlights('month-year',1,2024,'value')
+        self.assertTrue(all(r['value']==50 for r in all_stations['records'] if r['record_type']=='highest_tmax'))
+        build_index(self.api.source,self.api.products.db)
+        self.assertEqual(expected,[self.api.national_highlights(*args) for args in cases])
+        for field in ('ranking','station_group'):
+            with self.assertRaises(ValueError):
+                self.api.dispatch('national-highlights',{field:'invalid'})
+
+    def test_value_ranking_calendar_day_and_variable_qc(self):
+        result=self.api.national_highlights('month',2,2024,'value')
+        highs=[r for r in result['records'] if r['record_type']=='highest_tmax']
+        self.assertNotIn(99,[r['value'] for r in highs])
+        self.assertEqual(sum(r['station_id']=='test' for r in highs),4)
+        leap=self.api.national_highlights('day',2,2024,'value','all',29)
+        self.assertTrue(all(r['dates']==['2020-02-29'] for r in leap['records']))
+        build_index(self.api.source,self.api.products.db)
+        self.assertEqual(result,self.api.national_highlights('month',2,2024,'value'))
+        self.assertEqual(leap,self.api.national_highlights('day',2,2024,'value','all',29))
 
 
 if __name__ == '__main__': unittest.main()

@@ -14,7 +14,7 @@ from pathlib import Path
 from .config import DEFAULT_ROOT, readonly_uri
 from .phase3_api import ClimatologyStore
 from .phase3_policy import PERIODS, VARIABLES, CALENDAR
-from .station_metadata import resolve_station_name, resolve_station_coordinates
+from .station_metadata import resolve_station_name, resolve_station_coordinates, resolve_station_elevation
 
 RECORD_VARIABLES = {
     "highest_tmax": "tmax_c", "lowest_tmin": "tmin_c",
@@ -50,6 +50,7 @@ class Explorer:
             "missing_years FROM stations")}
         for sid, station in self.stations.items():
             station["station_name"] = resolve_station_name(sid, station["station_name"])
+            station["elevation_m"] = resolve_station_elevation(sid, station.get("elevation_m"))
             station["latitude"], station["longitude"] = resolve_station_coordinates(
                 sid, station["latitude"], station["longitude"])
     def quality(self,station):
@@ -325,23 +326,25 @@ class Explorer:
                 'month':int(month) if scope in ('day','month','month-year') else None,
                 'first_year':first, 'last_year':last, 'network_station_count':len(self.stations),
                 'qc_policy':'Extremes across the stations available in this archive, not a national average or a certified list of official Romanian records. Variable quality checks apply; all tied stations and dates are retained. Coverage varies by period.'}
-    def national_highlights(self, scope='month', month=1, year=None):
-        from .national_records import station_highlights, period
-        if scope not in ('month', 'month-year', 'year', 'all'):
-            raise ValueError('National highlights scope must be month, month-year, year or all')
+    def national_highlights(self, scope='month', month=1, year=None, ranking='station', station_group='all', day=1):
+        from .national_records import ranked_highlights, period, is_flat_station
+        if ranking not in ('station', 'value'):
+            raise ValueError('Ranking must be station or value')
+        if station_group not in ('all', 'flat'):
+            raise ValueError('Station group must be all or flat')
         year = self.year(year if year is not None else date.today().year)
         month = int(month)
-        key, label = period(scope, month, 1, year)
+        key, label = period(scope, month, int(day) if scope == 'day' else 1, year)
         first = min(s['first_year'] for s in self.stations.values())
         last = max(s['last_year'] for s in self.stations.values())
         if scope in ('year', 'month-year') and not first <= year <= last:
             raise ValueError('Year is outside the national archive')
-        indexed = self.products.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='national_station_rankings'").fetchone()
+        indexed = self.products.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='national_rankings'").fetchone()
         if indexed:
-            row = self.products.db.execute('SELECT data_json FROM national_station_rankings WHERE scope=? AND period=?', (scope,key)).fetchone()
+            row = self.products.db.execute('SELECT data_json FROM national_rankings WHERE scope=? AND period=? AND ranking=? AND station_group=?', (scope,key,ranking,station_group)).fetchone()
             data = json.loads(row[0]) if row else {'station_count':0, 'records':{}}
         else:
-            data = station_highlights(self.source, self.products.db, scope, key).get((scope,key), {'station_count':0, 'records':{}})
+            data = ranked_highlights(self.source, self.products.db, scope, key, ranking, station_group).get((scope,key,ranking,station_group), {'station_count':0, 'records':{}})
         rows = []
         for kind in RECORD_VARIABLES:
             for rank, record in enumerate(data['records'].get(kind, []), 1):
@@ -349,6 +352,9 @@ class Explorer:
                 rows.append({**self.annotate_record(sid, record, RECORD_VARIABLES[kind]),
                              'rank': rank, 'station_id': sid, 'station_name': self.stations[sid]['station_name']})
         return {'scope':scope, 'period_label':label, 'records':rows, 'limit':10,
+                'ranking':ranking, 'station_group':station_group,
+                'group_station_count':sum(station_group == 'all' or is_flat_station(s) for s in self.stations.values()),
+                'unknown_elevation_count':sum(s.get('elevation_m') is None for s in self.stations.values()),
                 'station_count':data['station_count'], 'network_station_count':len(self.stations),
                 'first_year':first, 'last_year':last,
                 'year':year if scope in ('year','month-year') else None,
@@ -492,7 +498,7 @@ class Explorer:
         return {"mode":mode,"normal":self.products.policy["normal"] if mode=="anomaly" else normal,
                 "year":year,"stations":rows}
     def dispatch(self, endpoint, params):
-        allowed={"station","normal","month","day","year","scope","start","end","kind","threshold","q","mode","value","variable"}
+        allowed={"station","normal","month","day","year","scope","start","end","kind","threshold","q","mode","value","variable","ranking","station_group"}
         if set(params)-allowed: raise ValueError("Unknown query parameter")
         def get(k,d=None): return params.get(k,d)
         station=get("station"); normal=get("normal","1991-2020")
@@ -507,7 +513,7 @@ class Explorer:
         if endpoint=="records": return self.records(station,get("scope","day"),month,day,year)
         if endpoint=="station-rankings": return self.station_rankings(station,get('kind','lowest_tmin'),get('scope','month'),month,day,year)
         if endpoint=="national-records": return self.national_records(get("scope","day"),month,day,year)
-        if endpoint=="national-highlights": return self.national_highlights(get("scope","month"),month,year)
+        if endpoint=="national-highlights": return self.national_highlights(get("scope","month"),month,year,get("ranking","station"),get("station_group","all"),day)
         if endpoint in ("temperature","rainfall"):
             data=self.series(station,normal)
             keep={"tmean_c","tmin_c","tmax_c"} if endpoint=="temperature" else {"precip_mm"}
