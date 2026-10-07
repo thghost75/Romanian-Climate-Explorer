@@ -200,3 +200,20 @@ Temperature range records:
   Incomplete periods are included but explicitly marked with separate Tmin/Tmax
   eligible-day counts and expected days. Missing data may underestimate ranges.
   Both extreme dates, QC annotations and source references remain inspectable.
+
+### Reviewed historical observations
+
+`anm_climate/observation_reviews.json` records per-variable decisions, original values,
+source references, supporting URLs and review dates. The build applies these to a
+fresh serving copy and rebuilds every product for affected stations before the
+national rankings and dashboard are generated. The downloaded ANM archive and
+published source snapshots are never overwritten. Excluded readings remain
+inspectable; corrections include their original value in review notes and API
+`original_values`. An upstream value change requires a fresh review, except when
+ANM has already adopted exactly the reviewed correction.
+
+The initial 7 October 2026 audit covers the then-leading ten national daily
+amplitudes: one documented sign correction and nine disputed variable readings
+withheld pending further evidence. It is not a certification of the remaining
+archive. Suspicious values must not be replaced solely by guessing a sign or
+comparing adjacent days. NOAA daily reporting periods can differ from ANM's.

@@ -60,7 +60,7 @@ class Explorer:
         return {"station_id":station,"variables":[dict(r) for r in self.products.db.execute(
             "SELECT variable,eligible_count,missing_count,excluded_count FROM qc_counts WHERE station_id=?",(station,))],
             "verification_notes":[n for n in self.notes if n["station_id"]==station],
-            "policy":"Variable-level exclusions affect derived statistics only. Raw source measurements are preserved."}
+            "policy":"Disputed variables are excluded from derived statistics. Documented corrections apply to the serving copy; original values and evidence are retained in the review notes and original archive."}
     def close(self):
         self.source.close()
         self.products.close()
@@ -119,6 +119,9 @@ class Explorer:
             obj["quality_flags"] = json.loads(obj["quality_flags"])
             obj["excluded_variables"] = exclusions.get(obj["date"], {})
             obj["verification_notes"] = self.reviews(station,obj["date"],obj["date"])
+            corrections = {n['variable']: n['original_value'] for n in obj['verification_notes'] if n.get('action') == 'correct'}
+            if corrections:
+                obj['original_values'] = corrections
             rows.append(obj)
         return rows
     def daily(self, station, month, day, normal):

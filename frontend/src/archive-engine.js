@@ -120,7 +120,7 @@ function recordDetails(r,label,national=false){
   return;
  }
  if((r.observations||[]).some(o=>'tmin_c' in o)){
-  modal(label+' · daily thermal amplitude','<p>Tmax − Tmin on the same station and date. Both temperatures must pass their quality checks.</p>'+table(['Date','Tmin °C','Tmax °C','Amplitude °C','Flags / review notes','Source'],r.observations.map(o=>[E(o.date),E(fmt(o.tmin_c)),E(fmt(o.tmax_c)),E(fmt(o.value)),E(JSON.stringify(o.quality_flags||[])+' '+(o.verification_notes||[]).map(n=>n.review_reason).join('; ')),E(o.source_member+':'+o.source_line)])));
+  modal(label+' · daily thermal amplitude','<p>Tmax − Tmin on the same station and date. Both temperatures must pass the available quality screens. This does not independently verify every historical measurement; documented corrections appear in the review notes.</p>'+table(['Date','Tmin °C','Tmax °C','Amplitude °C','Flags / review notes','Source'],r.observations.map(o=>[E(o.date),E(fmt(o.tmin_c)),E(fmt(o.tmax_c)),E(fmt(o.value)),E(JSON.stringify(o.quality_flags||[])+' '+(o.verification_notes||[]).map(n=>n.review_reason).join('; ')),E(o.source_member+':'+o.source_line)])));
   return;
  }
  const rows=(r.observations||[]).map(o=>[...(national?[E(o.station_name)+'<div class="ce-muted">'+E(o.station_id)+'</div>']:[]),E(o.date),E(fmt(o.value)),o.quality_flags?.length?E(JSON.stringify(o.quality_flags)):"None",E((o.verification_notes||[]).map(n=>n.review_reason).join("; ")||"None"),E(o.source_member+":"+o.source_line)]);
@@ -335,7 +335,7 @@ async function onPeriod(){
      E(recordNames[r.record_type]),E(r.rank),E(r.station_name||r.station_id)+'<div class="ce-muted">'+E(r.station_id)+'</div>',
      E(fmt(r.value)+' '+unit[recordVars[r.record_type]]),'<button data-period-record="'+i+'">'+E((r.periods?r.periods.map(p=>p.period):r.dates.map(x=>x.split('-').reverse().join('.'))).slice(0,2).join(' · '))+((r.periods||r.dates).length>2?' · +'+((r.periods||r.dates).length-2):'')+'</button>',
      (warn(r)||'Eligible')+(r.incomplete?' · Partial period':''),'<button data-period-station="'+E(r.station_id)+'">Open station</button>'])):'<p role="status">No eligible observations for this period and category.</p>')+
-    '<p class="ce-muted ce-small">These are records from the available station archive, not a complete or homogeneous national network.</p>';
+    '<p class="ce-muted ce-small">These are records from the available station archive, not a complete or homogeneous national network. Basic quality screening cannot detect every historical source error. Reviewed corrections are documented and disputed readings are withheld pending verification.</p>';
    bindNationalControls(node,onPeriod);
    node.querySelector('#ce-national-category').onchange=e=>{category=state.nationalCategory=e.target.value;show();node.querySelector('#ce-national-category').focus();};
    node.querySelector('#ce-national-export').onclick=()=>csv((monthly?'on-this-month':'on-this-year')+'.csv',['scope','period','ranking','station_group','category','position','station','station_name','value','unit','dates','period_details','observation_details','verification'],rows.map(r=>[d.scope,d.period_label,d.ranking,d.station_group,recordNames[r.record_type],r.rank,r.station_id,r.station_name,r.value,unit[recordVars[r.record_type]],r.dates,r.periods||[],r.observations||[],r.needs_verification]));

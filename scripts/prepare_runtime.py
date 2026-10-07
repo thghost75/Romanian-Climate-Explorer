@@ -9,6 +9,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from anm_climate.national_records import build_index
+from anm_climate.reviewed_observations import apply_reviews
 
 PROJECT = Path(__file__).resolve().parents[1]
 MAX_RUNTIME_BYTES = 4_500_000_000  # Leave room for the Python runtime below 5 GB.
@@ -78,9 +79,13 @@ def prepare(source=None, destination=None):
         copy_database(source / names[0], staging / names[0], ('stations', 'daily_observations'), True)
         copy_database(source / names[1], staging / names[1], PRODUCT_TABLES)
         with closing(sqlite3.connect(staging / names[0])) as observations, closing(sqlite3.connect(staging / names[1])) as products:
+            observations.row_factory = sqlite3.Row
+            reviews = apply_reviews(observations, products)
             print('Preparing compact national record summaries.', flush=True)
             build_index(observations, products)
         notes = (source / NOTES).read_bytes()
+        if reviews:
+            notes = json.dumps(json.loads(notes) + reviews, ensure_ascii=False).encode('utf-8')
         runtime_bytes = sum((staging / name).stat().st_size for name in names) + len(notes)
         if runtime_bytes >= MAX_RUNTIME_BYTES:
             raise ValueError('Serving snapshot exceeds the safe 4.5 GB deployment budget')
@@ -88,7 +93,7 @@ def prepare(source=None, destination=None):
         for name in names:
             (staging / name).replace(destination / name)
         (destination / NOTES).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source / NOTES, destination / NOTES)
+        (destination / NOTES).write_bytes(notes)
     source_bytes = sum((source / name).stat().st_size for name in names) + len(notes)
     report = {'source_bytes': source_bytes, 'runtime_bytes': runtime_bytes,
               'saved_bytes': source_bytes - runtime_bytes, 'limit_bytes': MAX_RUNTIME_BYTES}

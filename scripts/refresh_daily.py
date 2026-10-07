@@ -79,16 +79,19 @@ def update_station_summary(db, sid):
          json.dumps(sorted(set(range(min(years), max(years)+1))-set(years))), sid))
 
 
-def refresh_products(source, derived, sid, policy):
+def refresh_products(source, derived, sid, policy, reviewed_exclusions=None):
     rows = [dict(r) for r in source.execute(
         'SELECT date,' + ','.join(VARIABLES) + ',precip_raw,precip_trace,quality_flags '
         'FROM daily_observations WHERE station_id=? ORDER BY date', (sid,))]
     suspect = pressure_quarantine(rows)
     counts = {v: Counter() for v in VARIABLES}
     exclusions = []
+    reviewed_exclusions = reviewed_exclusions or {}
     for row in rows:
         for variable in VARIABLES:
             ok, reason = eligibility(row, variable, suspect)
+            if (row['date'], variable) in reviewed_exclusions:
+                ok, reason = False, reviewed_exclusions[(row['date'], variable)]
             counts[variable]['eligible' if ok else 'missing' if reason == 'missing' else 'excluded'] += 1
             if not ok and reason != 'missing':
                 exclusions.append((sid, row['date'], variable, reason, row[variable]))
@@ -100,7 +103,12 @@ def refresh_products(source, derived, sid, policy):
         derived.executemany('INSERT INTO qc_counts VALUES (?,?,?,?,?)',
                             [(sid, v, c['eligible'], c['missing'], c['excluded']) for v, c in counts.items()])
         started = time.monotonic()
-        save_station(derived, sid, cleaned_rows(rows, suspect), policy)
+        cleaned = cleaned_rows(rows, suspect)
+        for row in cleaned:
+            for variable in VARIABLES:
+                if (row['date'], variable) in reviewed_exclusions:
+                    row[variable] = None
+        save_station(derived, sid, cleaned, policy)
         derived.execute('INSERT INTO station_build VALUES (?,?)', (sid, time.monotonic()-started))
         if derived.execute('SELECT count(*) FROM daily_records WHERE station_id=?', (sid,)).fetchone()[0] != 366:
             raise ValueError('Incomplete rebuilt calendar')

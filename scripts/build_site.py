@@ -16,8 +16,8 @@ def main():
     parser.add_argument('--local',action='store_true',help='Use existing local data without fetching the published snapshot')
     args=parser.parse_args()
     if not args.local:fetch()
-    export()
     prepare()
+    export(PROJECT/'data/runtime')
     subprocess.run(['npm.cmd' if os.name=='nt' else 'npm','--prefix','frontend','run','build'],cwd=PROJECT,check=True)
 
 if __name__=='__main__':main()

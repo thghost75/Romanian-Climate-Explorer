@@ -1,0 +1,355 @@
+[
+  {
+    "station_id": "0-20000-0-15375",
+    "station_name": "TIRGOVISTE",
+    "start_date": "1929-12-23",
+    "end_date": "1929-12-23",
+    "variable": "tmax_c",
+    "original_value": 22.0,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15375_1929_12.csv:36",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15375/0-20000-0-15375_1929.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1929-12-22",
+        "tmin_c": null,
+        "tmax_c": null,
+        "tmean_c": null
+      },
+      {
+        "date": "1929-12-23",
+        "tmin_c": -21.0,
+        "tmax_c": 22.0,
+        "tmean_c": -12.0
+      },
+      {
+        "date": "1929-12-24",
+        "tmin_c": null,
+        "tmax_c": null,
+        "tmean_c": null
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15194",
+    "station_name": "TG.OCNA",
+    "start_date": "1901-01-12",
+    "end_date": "1901-01-12",
+    "variable": "tmax_c",
+    "original_value": 17.0,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15194_1901_01.csv:25",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15194/0-20000-0-15194_1901.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1901-01-11",
+        "tmin_c": 1.5,
+        "tmax_c": 12.0,
+        "tmean_c": 6.8
+      },
+      {
+        "date": "1901-01-12",
+        "tmin_c": -23.5,
+        "tmax_c": 17.0,
+        "tmean_c": -15.0
+      },
+      {
+        "date": "1901-01-13",
+        "tmin_c": -1.5,
+        "tmax_c": 12.5,
+        "tmean_c": 2.8
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1907-09-04",
+    "end_date": "1907-09-04",
+    "variable": "tmin_c",
+    "original_value": -15.0,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15127_1907_09.csv:17",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15127/0-20000-0-15127_1907.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1907-09-03",
+        "tmin_c": 10.2,
+        "tmax_c": 25.4,
+        "tmean_c": 16.0
+      },
+      {
+        "date": "1907-09-04",
+        "tmin_c": -15.0,
+        "tmax_c": 25.1,
+        "tmean_c": 16.2
+      },
+      {
+        "date": "1907-09-05",
+        "tmin_c": -6.0,
+        "tmax_c": 11.1,
+        "tmean_c": 6.6
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1907-09-01",
+    "end_date": "1907-09-01",
+    "variable": "tmin_c",
+    "original_value": -14.0,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15127_1907_09.csv:14",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15127/0-20000-0-15127_1907.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1907-08-31",
+        "tmin_c": 12.4,
+        "tmax_c": 25.3,
+        "tmean_c": 17.0
+      },
+      {
+        "date": "1907-09-01",
+        "tmin_c": -14.0,
+        "tmax_c": 24.8,
+        "tmean_c": 13.7
+      },
+      {
+        "date": "1907-09-02",
+        "tmin_c": -14.2,
+        "tmax_c": 23.9,
+        "tmean_c": 13.6
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1907-09-02",
+    "end_date": "1907-09-02",
+    "variable": "tmin_c",
+    "original_value": -14.2,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15127_1907_09.csv:15",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15127/0-20000-0-15127_1907.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1907-09-01",
+        "tmin_c": -14.0,
+        "tmax_c": 24.8,
+        "tmean_c": 13.7
+      },
+      {
+        "date": "1907-09-02",
+        "tmin_c": -14.2,
+        "tmax_c": 23.9,
+        "tmean_c": 13.6
+      },
+      {
+        "date": "1907-09-03",
+        "tmin_c": 10.2,
+        "tmax_c": 25.4,
+        "tmean_c": 16.0
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15010",
+    "station_name": "SATU MARE",
+    "start_date": "1942-01-24",
+    "end_date": "1942-01-24",
+    "variable": "tmax_c",
+    "original_value": 15.6,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15010_1942_01.csv:37",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15010/0-20000-0-15010_1942.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1942-01-23",
+        "tmin_c": -21.0,
+        "tmax_c": -15.9,
+        "tmean_c": null
+      },
+      {
+        "date": "1942-01-24",
+        "tmin_c": -22.0,
+        "tmax_c": 15.6,
+        "tmean_c": null
+      },
+      {
+        "date": "1942-01-25",
+        "tmin_c": -20.0,
+        "tmax_c": -5.0,
+        "tmean_c": null
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15375",
+    "station_name": "TIRGOVISTE",
+    "start_date": "1955-05-11",
+    "end_date": "1955-05-11",
+    "variable": "tmin_c",
+    "original_value": -9.0,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15375_1955_05.csv:24",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15375/0-20000-0-15375_1955.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1955-05-10",
+        "tmin_c": 6.4,
+        "tmax_c": 24.0,
+        "tmean_c": 15.7
+      },
+      {
+        "date": "1955-05-11",
+        "tmin_c": -9.0,
+        "tmax_c": 28.6,
+        "tmean_c": 17.5
+      },
+      {
+        "date": "1955-05-12",
+        "tmin_c": 12.0,
+        "tmax_c": 26.6,
+        "tmean_c": 18.0
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15107",
+    "station_name": "TOPLITA",
+    "start_date": "1953-12-15",
+    "end_date": "1953-12-15",
+    "variable": "tmax_c",
+    "original_value": 21.5,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15107_1953_12.csv:28",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15107/0-20000-0-15107_1953.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1953-12-14",
+        "tmin_c": -14.6,
+        "tmax_c": 3.5,
+        "tmean_c": -7.5
+      },
+      {
+        "date": "1953-12-15",
+        "tmin_c": -15.9,
+        "tmax_c": 21.5,
+        "tmean_c": -7.9
+      },
+      {
+        "date": "1953-12-16",
+        "tmin_c": -13.0,
+        "tmax_c": -0.7,
+        "tmean_c": -7.5
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15338",
+    "station_name": "ORAVITA",
+    "start_date": "1954-04-19",
+    "end_date": "1954-04-19",
+    "variable": "tmin_c",
+    "original_value": -17.6,
+    "action": "exclude",
+    "review_reason": "Disputed extreme flagged during the thermal-amplitude audit. Adjacent days and/or daily mean conflict with this unusually large range. Replacement not verified; this variable is excluded pending original-register confirmation. An anomaly is not proof of a particular replacement value.",
+    "source_checked": "ANM 0-20000-0-15338_1954_04.csv:32",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15338/0-20000-0-15338_1954.zip"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1954-04-18",
+        "tmin_c": -16.6,
+        "tmax_c": 14.6,
+        "tmean_c": -0.8
+      },
+      {
+        "date": "1954-04-19",
+        "tmin_c": -17.6,
+        "tmax_c": 19.3,
+        "tmean_c": 0.1
+      },
+      {
+        "date": "1954-04-20",
+        "tmin_c": -16.3,
+        "tmax_c": 19.5,
+        "tmean_c": 1.3
+      }
+    ]
+  },
+  {
+    "station_id": "0-20000-0-15025",
+    "station_name": "STANCA STEFANESTI",
+    "start_date": "1996-12-30",
+    "end_date": "1996-12-30",
+    "variable": "tmax_c",
+    "original_value": 12.0,
+    "action": "correct",
+    "corrected_value": -12.0,
+    "review_reason": "ANM publishes Tmax +12.0 C, but NOAA GSOD reports 10.4 F (-12.0 C), agreeing with the supplied 12-hour maximum report. Reviewed sign correction; reporting periods may differ.",
+    "source_checked": "ANM 0-20000-0-15025_1996_12.csv:43",
+    "evidence_urls": [
+      "https://odp.meteoromania.ro/station_data_series/climate/daily/0-20000-0-15025/0-20000-0-15025_1996.zip",
+      "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/1996/15025099999.csv",
+      "https://www.ncei.noaa.gov/data/global-summary-of-the-day/doc/readme.txt"
+    ],
+    "reviewed_at": "2026-10-07",
+    "nearby_days": [
+      {
+        "date": "1996-12-29",
+        "tmin_c": -23.5,
+        "tmax_c": -14.0,
+        "tmean_c": -18.1
+      },
+      {
+        "date": "1996-12-30",
+        "tmin_c": -24.7,
+        "tmax_c": 12.0,
+        "tmean_c": -18.4
+      },
+      {
+        "date": "1996-12-31",
+        "tmin_c": -12.8,
+        "tmax_c": -10.5,
+        "tmean_c": -11.4
+      }
+    ]
+  }
+]
