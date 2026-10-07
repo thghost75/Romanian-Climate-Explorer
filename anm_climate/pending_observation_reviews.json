@@ -1,0 +1,182 @@
+[
+  {
+    "station_id": "0-20000-0-15338",
+    "station_name": "ORAVITA",
+    "start_date": "1954-04-16",
+    "end_date": "1954-04-16",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15338",
+    "station_name": "ORAVITA",
+    "start_date": "1954-04-20",
+    "end_date": "1954-04-20",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15338",
+    "station_name": "ORAVITA",
+    "start_date": "1954-04-21",
+    "end_date": "1954-04-21",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1907-10-08",
+    "end_date": "1907-10-08",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1907-10-09",
+    "end_date": "1907-10-09",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1907-10-11",
+    "end_date": "1907-10-11",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1908-09-02",
+    "end_date": "1908-09-02",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1908-09-10",
+    "end_date": "1908-09-10",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1908-09-11",
+    "end_date": "1908-09-11",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1909-04-27",
+    "end_date": "1909-04-27",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15127",
+    "station_name": "JOSENI",
+    "start_date": "1909-04-28",
+    "end_date": "1909-04-28",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15465",
+    "station_name": "BAILESTI",
+    "start_date": "1950-08-14",
+    "end_date": "1950-08-14",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15465",
+    "station_name": "BAILESTI",
+    "start_date": "1950-08-27",
+    "end_date": "1950-08-27",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15465",
+    "station_name": "BAILESTI",
+    "start_date": "1950-08-29",
+    "end_date": "1950-08-29",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15056",
+    "station_name": "COTNARI",
+    "start_date": "1950-09-04",
+    "end_date": "1950-09-04",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15494",
+    "station_name": "BECHET",
+    "start_date": "1951-09-09",
+    "end_date": "1951-09-09",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15099",
+    "station_name": "HUEDIN",
+    "start_date": "1960-02-29",
+    "end_date": "1960-02-29",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15333",
+    "station_name": "BRAILA",
+    "start_date": "1883-03-05",
+    "end_date": "1883-03-05",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15364",
+    "station_name": "BOZOVICI",
+    "start_date": "1980-01-15",
+    "end_date": "1980-01-15",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  },
+  {
+    "station_id": "0-20000-0-15261",
+    "station_name": "INTORSURA BUZAULUI",
+    "start_date": "1952-03-12",
+    "end_date": "1952-03-12",
+    "action": "pending",
+    "review_reason": "Needs verification: the unusually large daily temperature range is under review. The original Tmin and Tmax have not been independently confirmed. This is not a confirmed error; values remain unchanged.",
+    "reviewed_at": "2026-10-07"
+  }
+]

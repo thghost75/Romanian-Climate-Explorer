@@ -46,6 +46,8 @@ class Explorer:
             raise
         notes = self.root / "processed/phase3/candidate_review_notes.json"
         self.notes = json.loads(notes.read_text(encoding="utf-8")) if notes.exists() else []
+        pending = Path(__file__).with_name("pending_observation_reviews.json")
+        self.notes.extend(json.loads(pending.read_text(encoding="utf-8")))
         self.stations = {r["station_id"]: dict(r) for r in self.source.execute(
             "SELECT station_id,station_name,latitude,longitude,elevation_m,first_observation,"
             "last_observation,observation_days,completeness_percent,first_year,last_year,"
