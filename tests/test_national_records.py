@@ -90,6 +90,9 @@ class NationalRecordTests(RecordPeriodTests):
         result=self.api.national_highlights('month-year',1,2024)
         self.assertEqual(result['station_count'],12)
         for kind in result['records']:
+            if kind['record_type'] == 'highest_excursion':
+                self.assertEqual(len(kind['periods']),1)
+                continue
             self.assertEqual(len(kind['dates']),2)
         for kind in ('highest_tmax','lowest_tmin','highest_precip','highest_mean_wind','highest_pressure','lowest_pressure'):
             records=[r for r in result['records'] if r['record_type']==kind]

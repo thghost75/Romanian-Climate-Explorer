@@ -15,6 +15,7 @@ from .config import DEFAULT_ROOT, readonly_uri
 from .phase3_api import ClimatologyStore
 from .phase3_policy import PERIODS, VARIABLES, CALENDAR
 from .station_metadata import resolve_station_name, resolve_station_coordinates, resolve_station_elevation
+from .thermal_records import AMPLITUDE, expression, inputs, amplitude, excursion
 
 RECORD_VARIABLES = {
     "highest_tmax": "tmax_c", "lowest_tmin": "tmin_c",
@@ -22,6 +23,7 @@ RECORD_VARIABLES = {
     "highest_tmean": "tmean_c", "lowest_tmean": "tmean_c",
     "highest_precip": "precip_mm", "highest_mean_wind": "wind_mean_ms",
     "highest_pressure": "pressure_msl_hpa", "lowest_pressure": "pressure_msl_hpa",
+    "highest_amplitude": AMPLITUDE,
 }
 def search_key(value):
     return "".join(c for c in unicodedata.normalize("NFKD", str(value)).casefold()
@@ -129,7 +131,8 @@ class Explorer:
             rows = self.observation_rows(station, when, when)
             if rows:
                 r = rows[0]
-                obj["observations"].append({"date": when, "value": r[variable],
+                obj["observations"].append({"date": when, "value": amplitude(r['tmin_c'], r['tmax_c']) if variable == AMPLITUDE else r[variable],
+                    **({'tmin_c':r['tmin_c'], 'tmax_c':r['tmax_c']} if variable == AMPLITUDE else {}),
                     "quality_flags": r["quality_flags"], "excluded_variables": r["excluded_variables"],
                     "verification_notes": r["verification_notes"],
                     "source_member": r["source_member"], "source_line": r["source_line"]})
@@ -144,7 +147,7 @@ class Explorer:
             'SELECT date,variable FROM qc_exclusions WHERE station_id=? AND date BETWEEN ? AND ?',
             (station,start,end))}
         variables = sorted({RECORD_VARIABLES[label] for label in labels})
-        sql = 'SELECT date,' + ','.join(variables) + ' FROM daily_observations WHERE station_id=? AND date BETWEEN ? AND ?'
+        sql = 'SELECT date,' + ','.join(expression(v)+' AS '+v for v in variables) + ' FROM daily_observations WHERE station_id=? AND date BETWEEN ? AND ?'
         arguments = [station,start,end]
         if calendar_filter:
             sql += ' AND substr(date,6,?)=?'
@@ -155,7 +158,7 @@ class Explorer:
             for label in labels:
                 variable = RECORD_VARIABLES[label]
                 value = row[variable]
-                if value is None or not math.isfinite(value) or (row['date'],variable) in exclusions:
+                if value is None or not math.isfinite(value) or any((row['date'],v) in exclusions for v in inputs(variable)):
                     continue
                 record = result[label]
                 record['sample_count'] += 1
@@ -213,6 +216,8 @@ class Explorer:
         """Ten distinct extreme values, grouping every tied observation date."""
         if kind in ('wettest_month','driest_month','wettest_year','driest_year'):
             return self.rainfall_rankings(station,kind,month)
+        if kind in ('highest_monthly_excursion', 'highest_yearly_excursion'):
+            return self.excursion_rankings(station, kind, month, year if scope in ('year','month-year') else None)
         from .national_records import period
         info = self.station(station)
         if kind not in RECORD_VARIABLES: raise ValueError('Unknown record category')
@@ -222,8 +227,8 @@ class Explorer:
             raise ValueError('Year is outside this station archive')
         variable = RECORD_VARIABLES[kind]
         excluded = {r[0] for r in self.products.db.execute(
-            'SELECT date FROM qc_exclusions WHERE station_id=? AND variable=?', (station, variable))}
-        sql = f'SELECT date,{variable} FROM daily_observations WHERE station_id=?'
+            'SELECT date FROM qc_exclusions WHERE station_id=? AND variable IN ('+','.join('?' for _ in inputs(variable))+')', (station, *inputs(variable)))}
+        sql = f'SELECT date,{expression(variable)} FROM daily_observations WHERE station_id=?'
         args = [station]
         if scope in ('year', 'month-year'):
             sql += ' AND date BETWEEN ? AND ?'
@@ -346,10 +351,11 @@ class Explorer:
         else:
             data = ranked_highlights(self.source, self.products.db, scope, key, ranking, station_group).get((scope,key,ranking,station_group), {'station_count':0, 'records':{}})
         rows = []
-        for kind in RECORD_VARIABLES:
+        for kind in [*RECORD_VARIABLES, *(['highest_excursion'] if scope != 'day' else [])]:
             for rank, record in enumerate(data['records'].get(kind, []), 1):
                 sid = record['station_id']
-                rows.append({**self.annotate_record(sid, record, RECORD_VARIABLES[kind]),
+                detail = self.annotate_excursion(sid, record) if kind == 'highest_excursion' else self.annotate_record(sid, record, RECORD_VARIABLES[kind])
+                rows.append({**detail,
                              'rank': rank, 'station_id': sid, 'station_name': self.stations[sid]['station_name']})
         return {'scope':scope, 'period_label':label, 'records':rows, 'limit':10,
                 'ranking':ranking, 'station_group':station_group,
@@ -359,6 +365,52 @@ class Explorer:
                 'first_year':first, 'last_year':last,
                 'year':year if scope in ('year','month-year') else None,
                 'month':month if scope in ('month','month-year') else None}
+
+    def annotate_excursion(self, station, record):
+        obj = dict(record)
+        obj['periods'] = []
+        for item in record['periods']:
+            low = self.annotate_record(station, {'dates':item['tmin_dates']}, 'tmin_c')
+            high = self.annotate_record(station, {'dates':item['tmax_dates']}, 'tmax_c')
+            obj['periods'].append({**item, 'minimum_observations':low['observations'],
+                                   'maximum_observations':high['observations'],
+                                   'needs_verification':low['needs_verification'] or high['needs_verification']})
+        obj['needs_verification'] = any(p['needs_verification'] for p in obj['periods'])
+        obj['incomplete'] = any(not p['complete'] for p in obj['periods'])
+        return obj
+
+    def excursion_rankings(self, station, kind, month, year=None):
+        from .national_records import aggregate
+        info = self.station(station)
+        month = int(month)
+        if not 1 <= month <= 12: raise ValueError('Month must be between 1 and 12')
+        monthly = kind == 'highest_monthly_excursion'
+        if year is not None:
+            year = self.year(year)
+            if not info['first_year'] <= year <= info['last_year']:
+                raise ValueError('Year is outside this station archive')
+        scope = 'month-year' if monthly else 'year'
+        indexed = self.products.db.execute("SELECT 1 FROM sqlite_master WHERE name='station_temperature_ranges' AND type='table'").fetchone()
+        if indexed:
+            periods = [json.loads(r[0]) for r in self.products.db.execute(
+                'SELECT data_json FROM station_temperature_ranges WHERE station_id=? AND scope=? ORDER BY period', (station,scope))]
+        else:
+            periods = [item for key,data in aggregate(self.source,self.products.db,station_ids=[station],include_days=False).items()
+                       if key[0] == scope and (item := excursion(key,data)) is not None]
+        periods = [p for p in periods if (not monthly or p['month'] == month) and (year is None or p['year'] == year)]
+        periods.sort(key=lambda p: (-p['value'], p['period']))
+        groups = []
+        for p in periods:
+            if not groups or p['value'] != groups[-1]['value']:
+                if len(groups) == 10: break
+                groups.append({'value':p['value'], 'periods':[]})
+            groups[-1]['periods'].append(p)
+        return {'station_id':station, 'station_name':info['station_name'], 'kind':kind,
+                'scope':('month-year' if monthly else 'year') if year is not None else ('month' if monthly else 'all'), 'period_unit':'month' if monthly else 'year',
+                'period_label':(date(2000,month,1).strftime('%B') if monthly else 'Calendar year')+(' '+str(year) if year is not None else ' · all available years'),
+                'excursion':True, 'sample_count':len(periods),
+                'ranking':[{'rank':i+1, **self.annotate_excursion(station,r)} for i,r in enumerate(groups)],
+                'qc_policy':'Highest eligible Tmax minus lowest eligible Tmin within the same calendar month or year at this station. Dates may differ. Partial periods are included and marked; inspect minimum and maximum dates and coverage. Up to ten distinct ranges; all tied periods retained.'}
 
     def series(self, station, normal):
         s = self.station(station); self.normal(normal)

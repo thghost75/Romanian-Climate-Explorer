@@ -6,8 +6,8 @@ const E=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt
 const fmt=(v,d=1)=>v===null||v===undefined||!Number.isFinite(Number(v))?"No data":Number(v).toLocaleString("en-GB",{maximumFractionDigits:d,minimumFractionDigits:d});
 const unit={tmean_c:"°C",tmin_c:"°C",tmax_c:"°C",precip_mm:"mm",wind_mean_ms:"m/s",pressure_msl_hpa:"hPa"};
 const names={tmean_c:"Mean temperature",tmin_c:"Minimum temperature",tmax_c:"Maximum temperature",precip_mm:"Precipitation",wind_mean_ms:"Mean wind",pressure_msl_hpa:"Sea-level pressure"};
-const recordNames={highest_tmax:"Highest Tmax",lowest_tmin:"Lowest Tmin",lowest_tmax:"Lowest Tmax",highest_tmin:"Highest Tmin",highest_tmean:"Highest Tmean",lowest_tmean:"Lowest Tmean",highest_precip:"Wettest day",wettest_month:"Wettest months",driest_month:"Driest months",wettest_year:"Wettest years",driest_year:"Driest years",highest_mean_wind:"Highest mean wind",highest_pressure:"Highest pressure",lowest_pressure:"Lowest pressure"};
-const recordVars={highest_tmax:"tmax_c",lowest_tmin:"tmin_c",lowest_tmax:"tmax_c",highest_tmin:"tmin_c",highest_tmean:"tmean_c",lowest_tmean:"tmean_c",highest_precip:"precip_mm",wettest_month:"precip_mm",driest_month:"precip_mm",wettest_year:"precip_mm",driest_year:"precip_mm",highest_mean_wind:"wind_mean_ms",highest_pressure:"pressure_msl_hpa",lowest_pressure:"pressure_msl_hpa"};
+const recordNames={highest_tmax:"Highest Tmax",lowest_tmin:"Lowest Tmin",lowest_tmax:"Lowest Tmax",highest_tmin:"Highest Tmin",highest_tmean:"Highest Tmean",lowest_tmean:"Lowest Tmean",highest_precip:"Wettest day",wettest_month:"Wettest months",driest_month:"Driest months",wettest_year:"Wettest years",driest_year:"Driest years",highest_mean_wind:"Highest mean wind",highest_pressure:"Highest pressure",lowest_pressure:"Lowest pressure",highest_amplitude:"Highest daily thermal amplitude",highest_excursion:"Highest temperature excursion",highest_monthly_excursion:"Highest monthly temperature excursion",highest_yearly_excursion:"Highest yearly temperature excursion"};
+const recordVars={highest_tmax:"tmax_c",lowest_tmin:"tmin_c",lowest_tmax:"tmax_c",highest_tmin:"tmin_c",highest_tmean:"tmean_c",lowest_tmean:"tmean_c",highest_precip:"precip_mm",wettest_month:"precip_mm",driest_month:"precip_mm",wettest_year:"precip_mm",driest_year:"precip_mm",highest_mean_wind:"wind_mean_ms",highest_pressure:"pressure_msl_hpa",lowest_pressure:"pressure_msl_hpa",highest_amplitude:"tmax_c",highest_excursion:"tmax_c",highest_monthly_excursion:"tmax_c",highest_yearly_excursion:"tmax_c"};
 const today=new Date(),state={station:"0-20000-0-15085",normal:"1991-2020",month:today.getMonth()+1,day:today.getDate(),year:today.getFullYear()-1,tab:"overview",recordScope:"month",recordKind:"lowest_tmin",nationalCategory:"all",nationalRanking:"station",nationalStations:"all",mode:"stations",catalogue:[],boundary:null};
 let serial=0,mapSerial=0;const cache=new Map(),API="";
 async function api(endpoint,params={}){
@@ -114,6 +114,15 @@ function modal(title,body){
  wrap.onkeydown=e=>{if(e.key==="Escape")close();if(e.key==="Tab"){const f=[...wrap.querySelectorAll('button,a,input,select,summary,[tabindex="0"]')];if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===f.at(-1)){e.preventDefault();f[0].focus();}}};wrap.querySelector("button").focus();return wrap.querySelector(".ce-modal-body");
 }
 function recordDetails(r,label,national=false){
+ if(r.periods){
+  const dates=items=>items.map(d=>d.split('-').reverse().join('.')).join(' · ');
+  modal(label+' · temperature excursion','<p>Highest eligible Tmax minus lowest eligible Tmin at the same station within each calendar period. Partial periods may underestimate the full range.</p>'+table(['Period','Range','Lowest Tmin · dates','Highest Tmax · dates','Eligible days','Coverage'],r.periods.map(p=>[E(p.period),E(fmt(p.value)+' °C'),E(fmt(p.tmin_c)+' °C · '+dates(p.tmin_dates)),E(fmt(p.tmax_c)+' °C · '+dates(p.tmax_dates)),E('Tmin '+p.tmin_days+' / '+p.expected_days+'; Tmax '+p.tmax_days+' / '+p.expected_days),p.complete?'Complete':'Partial period']))+table(['Period','Extreme','Date','Value °C','Flags / review notes','Source'],r.periods.flatMap(p=>[['Minimum',p.minimum_observations],['Maximum',p.maximum_observations]].flatMap(([kind,items])=>items.map(o=>[E(p.period),kind,E(o.date),E(fmt(o.value)),E(JSON.stringify(o.quality_flags||[])+' '+(o.verification_notes||[]).map(n=>n.review_reason).join('; ')),E(o.source_member+':'+o.source_line)])))));
+  return;
+ }
+ if((r.observations||[]).some(o=>'tmin_c' in o)){
+  modal(label+' · daily thermal amplitude','<p>Tmax − Tmin on the same station and date. Both temperatures must pass their quality checks.</p>'+table(['Date','Tmin °C','Tmax °C','Amplitude °C','Flags / review notes','Source'],r.observations.map(o=>[E(o.date),E(fmt(o.tmin_c)),E(fmt(o.tmax_c)),E(fmt(o.value)),E(JSON.stringify(o.quality_flags||[])+' '+(o.verification_notes||[]).map(n=>n.review_reason).join('; ')),E(o.source_member+':'+o.source_line)])));
+  return;
+ }
  const rows=(r.observations||[]).map(o=>[...(national?[E(o.station_name)+'<div class="ce-muted">'+E(o.station_id)+'</div>']:[]),E(o.date),E(fmt(o.value)),o.quality_flags?.length?E(JSON.stringify(o.quality_flags)):"None",E((o.verification_notes||[]).map(n=>n.review_reason).join("; ")||"None"),E(o.source_member+":"+o.source_line)]);
  modal(label+" · all tied dates",'<p>Variable-level QC applies. Flags on other variables remain visible without automatically invalidating this value.</p>'+table([...(national?["Station"]:[]),"Date","Value","Original flags","Verification notes","Source"],rows));
 }
@@ -169,10 +178,10 @@ function renderRecords(node,d){
  const station=state.catalogue.find(s=>s.station_id===state.station);
  const first=station.first_year,last=station.last_year;
  const recordYear=state.year;
- const yearly=!rainTotals&&['year','month-year'].includes(state.recordScope);
- const scopes=[['day','Calendar day · all years'],['month','Calendar month · all years'],['month-year','Month in a selected year'],['year','Selected year'],['all','All-time records']];
- node.innerHTML='<p class="ce-muted">Top 10 distinct values for the selected station. Choose a station in the sidebar, then a category and period. For comparisons across Romania, use On this day, On this month or On this year.</p><div class="ce-controls">'+(rainTotals?'<span class="ce-small ce-muted">'+(d.period_unit==='month'?'Selected calendar month · full archive':'All complete years · full archive')+'</span>':'<label>Record scope<select id="ce-record-scope" aria-label="Record scope">'+scopes.map(([value,label])=>'<option value="'+value+'"'+(value===state.recordScope?' selected':'')+'>'+label+'</option>').join('')+'</select></label>')+
- '<label>Record category<select id="ce-record-kind" aria-label="Record category">'+Object.entries(recordNames).map(([k,label])=>'<option value="'+k+'"'+(k===state.recordKind?' selected':'')+'>'+E(label)+'</option>').join('')+'</select></label>'+
+ const yearly=(!rainTotals||d.excursion)&&['year','month-year'].includes(state.recordScope);
+ const scopes=d.excursion?(d.period_unit==='month'?[['month','Calendar month · all years'],['month-year','Month in a selected year']]:[['all','All calendar years'],['year','Selected year']]):[['day','Calendar day · all years'],['month','Calendar month · all years'],['month-year','Month in a selected year'],['year','Selected year'],['all','All-time records']];
+ node.innerHTML='<p class="ce-muted">Top 10 distinct values for the selected station. Choose a station in the sidebar, then a category and period. For comparisons across Romania, use On this day, On this month or On this year.</p><div class="ce-controls">'+(rainTotals&&!d.excursion?'<span class="ce-small ce-muted">'+(d.period_unit==='month'?'Selected calendar month · full archive':d.excursion?'Calendar years · full archive':'All complete years · full archive')+'</span>':'<label>Record scope<select id="ce-record-scope" aria-label="Record scope">'+scopes.map(([value,label])=>'<option value="'+value+'"'+(value===state.recordScope?' selected':'')+'>'+label+'</option>').join('')+'</select></label>')+
+ '<label>Record category<select id="ce-record-kind" aria-label="Record category">'+Object.entries(recordNames).filter(([k])=>k!=="highest_excursion").map(([k,label])=>'<option value="'+k+'"'+(k===state.recordKind?' selected':'')+'>'+E(label)+'</option>').join('')+'</select></label>'+
  (yearly?'<label>Record year<input id="ce-record-year" type="number" min="'+first+'" max="'+last+'" value="'+recordYear+'"></label><button id="ce-record-load">View records</button>':'')+
  '<button id="ce-record-export">Export records CSV</button></div><div id="ce-record-table"></div>';
   const prettyDate=iso=>iso.split('-').reverse().join('.');
@@ -180,23 +189,24 @@ function renderRecords(node,d){
   const labels=r=>rainTotals?r.periods.map(periodText):r.dates.map(prettyDate);
   const periodNoun=rainTotals?(d.period_unit==='month'?'months':'years'):'dates';
   node.querySelector('#ce-record-table').innerHTML=panel('Top 10 values · '+recordNames[d.kind]+' · '+d.period_label,
-   '<p class="ce-small"><strong>'+E(d.station_name)+'</strong> · '+E(d.sample_count)+' '+(rainTotals?'complete '+periodNoun:'eligible observation days')+'</p><p class="ce-small ce-muted">'+E(d.qc_policy)+'</p>'+
-   (rainTotals?'<p class="ce-small ce-muted">'+E(d.excluded_period_count)+' incomplete or ineligible '+periodNoun+' excluded.</p>':'')+
-   (d.ranking.length?table(['Rank','Value',rainTotals?'Periods · inspect':'Dates · inspect'],d.ranking.map((r,i)=>{const dates=labels(r);return [E(r.rank),E(fmt(r.value)+' '+unit[recordVars[d.kind]]),'<button data-ranking="'+i+'" aria-label="Inspect rank '+r.rank+' '+periodNoun+'">'+E(dates.length===1?dates[0]:dates.length+' tied '+periodNoun)+'</button>'+(dates.length>1?'<div class="ce-small ce-muted">'+E(dates.slice(0,2).join(' · '))+(dates.length>2?' …':'')+'</div>':'')+' '+warn(r)];})):'<p>No '+(rainTotals?'complete rainfall periods':'eligible observations')+' for this selection.</p>'));
+   '<p class="ce-small"><strong>'+E(d.station_name)+'</strong> · '+E(d.sample_count)+' '+(rainTotals?(d.excursion?'eligible ':'complete ')+periodNoun:'eligible observation days')+'</p><p class="ce-small ce-muted">'+E(d.qc_policy)+'</p>'+
+   (rainTotals&&!d.excursion?'<p class="ce-small ce-muted">'+E(d.excluded_period_count)+' incomplete or ineligible '+periodNoun+' excluded.</p>':'')+
+   (d.ranking.length?table(['Rank','Value',rainTotals?'Periods · inspect':'Dates · inspect'],d.ranking.map((r,i)=>{const dates=labels(r);return [E(r.rank),E(fmt(r.value)+' '+unit[recordVars[d.kind]]),'<button data-ranking="'+i+'" aria-label="Inspect rank '+r.rank+' '+periodNoun+'">'+E(dates.length===1?dates[0]:dates.length+' tied '+periodNoun)+'</button>'+(dates.length>1?'<div class="ce-small ce-muted">'+E(dates.slice(0,2).join(' · '))+(dates.length>2?' …':'')+'</div>':'')+' '+warn(r)+(r.incomplete?' <span class="ce-badge">Partial period</span>':'')];})):'<p>No '+(rainTotals?(d.excursion?'eligible temperature periods':'complete rainfall periods'):'eligible observations')+' for this selection.</p>'));
   node.querySelector('#ce-record-table').classList.add('ce-rankings');
   node.querySelectorAll('[data-ranking]').forEach(b=>b.onclick=()=>{
    const r=d.ranking[Number(b.dataset.ranking)];
-   if(!rainTotals){recordDetails(r,recordNames[d.kind]);return;}
+   if(!rainTotals||d.excursion){recordDetails(r,recordNames[d.kind]);return;}
    modal(recordNames[d.kind]+' · all tied periods','<p>'+E(d.station_name)+' · '+E(fmt(r.value))+' mm. Each total includes every day in the calendar period.</p>'+table(['Period','Rainfall','Coverage','Quality details'],r.periods.map(p=>[E(periodText(p)),E(fmt(p.total)+' mm'),E(p.sample_count+' / '+p.expected_days+' days'),E(p.flagged_dates.length+' source-flagged days')+(p.flagged_dates.length?'<details><summary>Flagged dates</summary>'+E(p.flagged_dates.map(prettyDate).join(' · '))+'</details>':'')+(p.verification_notes.length?'<p>'+E(p.verification_notes.map(n=>n.review_reason).join('; '))+'</p>':'')])));
   });
- node.querySelector('#ce-record-kind').onchange=e=>{state.recordKind=e.target.value;void renderTab();};
- if(!rainTotals)node.querySelector('#ce-record-scope').onchange=e=>{state.recordScope=e.target.value;void renderTab();};
+ node.querySelector('#ce-record-kind').onchange=e=>{state.recordKind=e.target.value;if(state.recordKind==='highest_monthly_excursion')state.recordScope='month';if(state.recordKind==='highest_yearly_excursion')state.recordScope='all';void renderTab();};
+ if(!rainTotals||d.excursion)node.querySelector('#ce-record-scope').onchange=e=>{state.recordScope=e.target.value;void renderTab();};
  if(yearly)node.querySelector('#ce-record-load').onclick=()=>{
   const y=Number(node.querySelector('#ce-record-year').value);
   if(!Number.isInteger(y)||y<first||y>last){modal('Choose a year','Choose a year between '+first+' and '+last+'.');return;}
   if(y!==state.year)onChange({year:y});
  };
- if(rainTotals)node.querySelector('#ce-record-export').onclick=()=>csv('rainfall-top-10.csv',['station','station_name','scope','period','record','rank','total_mm','tied_periods','complete_periods','excluded_periods','verification'],d.ranking.map(r=>[d.station_id,d.station_name,d.scope,d.period_label,d.kind,r.rank,r.value,r.periods,d.sample_count,d.excluded_period_count,r.needs_verification]));
+ if(d.excursion)node.querySelector('#ce-record-export').onclick=()=>csv('temperature-excursions.csv',['station','station_name','record','rank','range_c','period_details','incomplete','verification'],d.ranking.map(r=>[d.station_id,d.station_name,d.kind,r.rank,r.value,r.periods,r.incomplete,r.needs_verification]));
+ else if(rainTotals)node.querySelector('#ce-record-export').onclick=()=>csv('rainfall-top-10.csv',['station','station_name','scope','period','record','rank','total_mm','tied_periods','complete_periods','excluded_periods','verification'],d.ranking.map(r=>[d.station_id,d.station_name,d.scope,d.period_label,d.kind,r.rank,r.value,r.periods,d.sample_count,d.excluded_period_count,r.needs_verification]));
  else node.querySelector('#ce-record-export').onclick=()=>csv('station-top-10.csv',['station','station_name','scope','period','record','rank','dates','value','unit','eligible_days','verification','observation_details'],d.ranking.map(r=>[d.station_id,d.station_name,d.scope,d.period_label,d.kind,r.rank,r.dates,r.value,unit[recordVars[d.kind]],d.sample_count,r.needs_verification,r.observations]));
 }
 
@@ -275,7 +285,7 @@ async function renderHistory(node,d){
 }
 const nationalOptions=()=>({ranking:state.nationalRanking,station_group:state.nationalStations});
 const nationalControls=()=>'<div class="ce-controls"><label>Rank records<select id="ce-national-ranking"><option value="station"'+(state.nationalRanking==='station'?' selected':'')+'>Per station</option><option value="value"'+(state.nationalRanking==='value'?' selected':'')+'>Per value</option></select></label><label>Station group<select id="ce-national-stations"><option value="all"'+(state.nationalStations==='all'?' selected':'')+'>All stations</option><option value="flat"'+(state.nationalStations==='flat'?' selected':'')+'>Flat stations</option></select></label></div>';
-const nationalExplanation=()=>'<p class="ce-muted ce-small">'+(state.nationalRanking==='value'?'Up to ten daily observations per category. A station can appear more than once. Equal values are ordered by date, then station ID; positions run from 1 to 10.':'One extreme per station in each category, with all dates tied at that extreme. Equal values are ordered by station ID.')+(state.nationalStations==='flat'?' Flat stations: elevations up to and including 800 m, excluding Voineasa. Stations without a recorded elevation are excluded.':'')+'</p>';
+const nationalExplanation=()=>'<p class="ce-muted ce-small">'+(state.nationalRanking==='value'?'Up to ten entries per category; a station can appear more than once. Daily records use individual dates; excursions use individual calendar periods. Equal values are ordered by date or period, then station ID; positions run from 1 to 10.':'One leading record per station in each category, with tied dates or periods retained. Equal values are ordered by station ID.')+(state.nationalStations==='flat'?' Flat stations: elevations up to and including 800 m, excluding Voineasa. Stations without a recorded elevation are excluded.':'')+'</p>';
 function bindNationalControls(node,reload){
  node.querySelector('#ce-national-ranking').onchange=async e=>{state.nationalRanking=e.target.value;await reload();node.querySelector('#ce-national-ranking')?.focus();};
  node.querySelector('#ce-national-stations').onchange=async e=>{state.nationalStations=e.target.value;await reload();node.querySelector('#ce-national-stations')?.focus();};
@@ -289,7 +299,7 @@ async function onDay(){
  node.dataset.ready="true";
  let full=false;
  function show(){
- const groups=Object.keys(recordVars).filter(k=>!['wettest_month','driest_month','wettest_year','driest_year'].includes(k));
+ const groups=Object.keys(recordVars).filter(k=>(state.tab!=='on-day'||k!=='highest_excursion')&&!['wettest_month','driest_month','wettest_year','driest_year','highest_monthly_excursion','highest_yearly_excursion'].includes(k));
  const ordered=full?groups.flatMap(k=>d.records.filter(r=>r.record_type===k).sort((a,b)=>(k.startsWith('lowest')?a.value-b.value:b.value-a.value)||a.station_id.localeCompare(b.station_id)).map((r,i)=>({...r,rank:i+1}))):highlights.records;
  node.innerHTML='<div class="ce-heading"><div><div class="ce-eyebrow">On this day in Romania</div><h2>'+E(d.calendar_day)+'</h2><p class="ce-muted">'+(full?'All available station records':state.nationalRanking==='value'?'Top 10 daily observations in each category':'Top 10 station records in each category')+'</p></div>'+(state.nationalRanking==='station'?'<button id="ce-day-all">'+(full?'Show highlights':'Show complete results')+'</button>':'')+'</div>'+nationalControls()+nationalExplanation()+
  table(["Category","Position","Station","Value","Dates","Quality","Explore"],ordered.map((r,i)=>[E(recordNames[r.record_type]),E(r.rank),E(r.station_name||r.station_id)+'<div class="ce-muted">'+E(r.station_id)+"</div>",E(fmt(r.value)+" "+unit[recordVars[r.record_type]]),'<button data-day-record="'+i+'">'+E(r.dates.slice(0,2).join(" · "))+(r.dates.length>2?" · +"+(r.dates.length-2):"")+"</button>",warn(r)||"Eligible",'<button data-day-station="'+E(r.station_id)+'">Open station</button>']))+
@@ -301,7 +311,7 @@ async function onDay(){
  bindNationalControls(node,onDay);
  const fullButton=node.querySelector('#ce-day-all');if(fullButton)fullButton.onclick=()=>{full=!full;show();};node.querySelectorAll("[data-day-record]").forEach(b=>b.onclick=()=>{const r=ordered[Number(b.dataset.dayRecord)];recordDetails(r,recordNames[r.record_type]);});
  node.querySelectorAll("[data-day-station]").forEach(b=>b.onclick=()=>{onChange({station:b.dataset.dayStation,tab:"records"});});
- node.querySelector("#ce-day-export").onclick=()=>csv("on-this-day.csv",["ranking","station_group","position","station","station_name","record","value","dates","verification"],ordered.map(r=>[state.nationalRanking,state.nationalStations,r.rank,r.station_id,r.station_name,r.record_type,r.value,r.dates,r.needs_verification]));
+ node.querySelector("#ce-day-export").onclick=()=>csv("on-this-day.csv",["ranking","station_group","position","station","station_name","record","value","dates","verification"],ordered.map(r=>[state.nationalRanking,state.nationalStations,r.rank,r.station_id,r.station_name,r.record_type,r.value,r.dates,r.observations,r.needs_verification]));
  }show();
  }catch(e){if(id===serial)failure(node,e);}
 }
@@ -313,22 +323,22 @@ async function onPeriod(){
  node.textContent='Searching national records…';
  try{
   const d=await api('national-highlights',query);if(id!==serial)return;
-  const groups=Object.keys(recordVars).filter(k=>!['wettest_month','driest_month','wettest_year','driest_year'].includes(k));
+  const groups=Object.keys(recordVars).filter(k=>(state.tab!=='on-day'||k!=='highest_excursion')&&!['wettest_month','driest_month','wettest_year','driest_year','highest_monthly_excursion','highest_yearly_excursion'].includes(k));
   let category=state.nationalCategory;
   const show=()=>{
    const rows=d.records.filter(r=>category==='all'||r.record_type===category);
    node.dataset.ready='true';
-   node.innerHTML='<div class="ce-heading"><div><div class="ce-eyebrow">'+(monthly?'On this month':'On this year')+' in Romania</div><h2>'+E(d.period_label)+'</h2><p class="ce-muted">'+(state.nationalRanking==='value'?'Top 10 daily observations':'Top 10 station records')+' in each category</p></div></div>'+nationalControls()+nationalExplanation()+
+   node.innerHTML='<div class="ce-heading"><div><div class="ce-eyebrow">'+(monthly?'On this month':'On this year')+' in Romania</div><h2>'+E(d.period_label)+'</h2><p class="ce-muted">'+(state.nationalRanking==='value'?'Top 10 records':'Top 10 station records')+' in each category</p></div></div>'+nationalControls()+nationalExplanation()+
     '<div class="ce-controls"><label>Record category<select id="ce-national-category" aria-label="National record category"><option value="all">All categories</option>'+groups.map(k=>'<option value="'+k+'"'+(category===k?' selected':'')+'>'+E(recordNames[k])+'</option>').join('')+'</select></label><button id="ce-national-export">Export top 10 CSV</button></div>'+
-    '<p class="ce-muted ce-small">'+E(d.station_count)+' of '+E(d.group_station_count)+' stations in this group have eligible observations in this period. Values are daily extremes within the selected period, not monthly or annual averages or totals. Wind is daily mean wind, not gusts. The current year may be incomplete.</p>'+
-    (rows.length?table(['Category','Position','Station','Value','Dates','Quality','Explore'],rows.map((r,i)=>[
+    '<p class="ce-muted ce-small">'+E(d.station_count)+' of '+E(d.group_station_count)+' stations in this group have eligible observations in this period. Daily amplitude is Tmax − Tmin on the same date. Temperature excursion is the highest Tmax minus lowest Tmin within one calendar month or year at one station; its dates may differ, and partial periods are marked. All-years excursion rankings compare individual months or years. Other values are daily extremes, not averages or totals. Wind is daily mean wind, not gusts. The current year may be incomplete.</p>'+
+    (rows.length?table(['Category','Position','Station','Value','Dates / periods','Quality','Explore'],rows.map((r,i)=>[
      E(recordNames[r.record_type]),E(r.rank),E(r.station_name||r.station_id)+'<div class="ce-muted">'+E(r.station_id)+'</div>',
-     E(fmt(r.value)+' '+unit[recordVars[r.record_type]]),'<button data-period-record="'+i+'">'+E(r.dates.slice(0,2).map(x=>x.split('-').reverse().join('.')).join(' · '))+(r.dates.length>2?' · +'+(r.dates.length-2):'')+'</button>',
-     warn(r)||'Eligible','<button data-period-station="'+E(r.station_id)+'">Open station</button>'])):'<p role="status">No eligible observations for this period and category.</p>')+
+     E(fmt(r.value)+' '+unit[recordVars[r.record_type]]),'<button data-period-record="'+i+'">'+E((r.periods?r.periods.map(p=>p.period):r.dates.map(x=>x.split('-').reverse().join('.'))).slice(0,2).join(' · '))+((r.periods||r.dates).length>2?' · +'+((r.periods||r.dates).length-2):'')+'</button>',
+     (warn(r)||'Eligible')+(r.incomplete?' · Partial period':''),'<button data-period-station="'+E(r.station_id)+'">Open station</button>'])):'<p role="status">No eligible observations for this period and category.</p>')+
     '<p class="ce-muted ce-small">These are records from the available station archive, not a complete or homogeneous national network.</p>';
    bindNationalControls(node,onPeriod);
    node.querySelector('#ce-national-category').onchange=e=>{category=state.nationalCategory=e.target.value;show();node.querySelector('#ce-national-category').focus();};
-   node.querySelector('#ce-national-export').onclick=()=>csv((monthly?'on-this-month':'on-this-year')+'.csv',['scope','period','ranking','station_group','category','position','station','station_name','value','unit','dates','verification'],rows.map(r=>[d.scope,d.period_label,d.ranking,d.station_group,recordNames[r.record_type],r.rank,r.station_id,r.station_name,r.value,unit[recordVars[r.record_type]],r.dates,r.needs_verification]));
+   node.querySelector('#ce-national-export').onclick=()=>csv((monthly?'on-this-month':'on-this-year')+'.csv',['scope','period','ranking','station_group','category','position','station','station_name','value','unit','dates','period_details','observation_details','verification'],rows.map(r=>[d.scope,d.period_label,d.ranking,d.station_group,recordNames[r.record_type],r.rank,r.station_id,r.station_name,r.value,unit[recordVars[r.record_type]],r.dates,r.periods||[],r.observations||[],r.needs_verification]));
    node.querySelectorAll('[data-period-record]').forEach(b=>b.onclick=()=>{const r=rows[Number(b.dataset.periodRecord)];recordDetails(r,(r.station_name||r.station_id)+' · '+recordNames[r.record_type]);});
    node.querySelectorAll('[data-period-station]').forEach(b=>b.onclick=()=>onChange({station:b.dataset.periodStation,tab:'records'}));
   };

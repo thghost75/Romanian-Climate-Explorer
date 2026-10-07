@@ -180,3 +180,23 @@ elevations take precedence. These are current station elevations, not a history
 of station relocations. The present grouping is 135 flat and 25 excluded stations.
 Both ranking modes and groups are precomputed during each deployment to keep
 full-archive queries fast; the existing serving-size limit remains enforced.
+
+Temperature range records:
+
+- **Highest daily thermal amplitude** is Tmax minus Tmin at the same station on
+  the same date. Both inputs must be finite, pass their variable-specific QC,
+  and have Tmax >= Tmin. Available in national day/month/year views and station
+  Records; inspection shows both input temperatures and source references.
+- **Highest temperature excursion** is the highest eligible Tmax minus the
+  lowest eligible Tmin within one calendar month or year at one station. The
+  dates may differ. National month/year views rank station-period ranges; across
+  all years they compare individual months/years, never mix years or stations.
+  Per station retains each station's largest period range and all tied periods;
+  per value ranks ten station-period observations, allowing repeated stations.
+- Station Records offers **Highest monthly temperature excursion** for the
+  selected calendar month across years and **Highest yearly temperature
+  excursion** across calendar years, with ten distinct ranges and tied periods.
+  Both can also be restricted to a selected year using Record scope and Record year.
+  Incomplete periods are included but explicitly marked with separate Tmin/Tmax
+  eligible-day counts and expected days. Missing data may underestimate ranges.
+  Both extreme dates, QC annotations and source references remain inspectable.

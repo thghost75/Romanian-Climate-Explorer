@@ -4,8 +4,11 @@ import math
 from bisect import insort
 from datetime import date
 
-from .phase3_products import RECORDS
+from .phase3_products import RECORDS as BASE_RECORDS
 from .station_metadata import resolve_station_elevation
+from .thermal_records import AMPLITUDE, expression, excursion, merge_excursion
+
+RECORDS = (*BASE_RECORDS, ('highest_amplitude', AMPLITUDE, 'max'))
 
 
 def period(scope, month, day, year):
@@ -23,7 +26,7 @@ def empty():
                                          for label, _, _ in RECORDS}}
 
 
-def aggregate(source, products, scope=None, key=None, station_ids=None, include_days=True, include_values=False):
+def aggregate(source, products, scope=None, key=None, station_ids=None, include_days=True, include_values=False, materialize_periods=False):
     """Build all periods once, or a single period for an unprepared local archive."""
     buckets = {}
     variables = list(dict.fromkeys(variable for _, variable, _ in RECORDS))
@@ -32,7 +35,7 @@ def aggregate(source, products, scope=None, key=None, station_ids=None, include_
     for station in stations:
         exclusions = {(r[0], r[1]) for r in products.execute(
             'SELECT date,variable FROM qc_exclusions WHERE station_id=?', (station,))}
-        sql = 'SELECT date,' + ','.join(variables) + ' FROM daily_observations WHERE station_id=?'
+        sql = 'SELECT date,' + ','.join(expression(v) for v in variables) + ' FROM daily_observations WHERE station_id=?'
         args = [station]
         if scope in ('year', 'month-year'):
             sql += ' AND date BETWEEN ? AND ?'
@@ -42,14 +45,15 @@ def aggregate(source, products, scope=None, key=None, station_ids=None, include_
             args.extend((len(key), key))
         for row in source.execute(sql + ' ORDER BY date', args):
             when = row[0]
-            keys = [(scope, key)] if scope else ([('day', when[5:])] if include_days else []) + [('month-year', when[:7])]
+            keys = [(scope, key)] if scope and not materialize_periods else ([('day', when[5:])] if include_days else []) + [('month-year', when[:7])]
             targets = []
             for bucket_key in keys:
                 if bucket_key not in buckets: buckets[bucket_key] = empty()
                 targets.append(buckets[bucket_key])
             for label, index, variable, lowest in positions:
                 value = row[index]
-                if value is None or not math.isfinite(value) or (when, variable) in exclusions:
+                if (value is None or not math.isfinite(value) or (when, variable) in exclusions
+                        or variable == AMPLITUDE and ((when, 'tmin_c') in exclusions or (when, 'tmax_c') in exclusions)):
                     continue
                 for target in targets:
                     target['stations'].add(station)
@@ -67,7 +71,7 @@ def aggregate(source, products, scope=None, key=None, station_ids=None, include_
                         record['holders'] = []
                     if value == record['value']:
                         record['holders'].append([station, when])
-    if scope:
+    if scope and not materialize_periods:
         buckets.setdefault((scope, key), empty())
     else:
         # Roll up disjoint month/year samples without scanning observations again.
@@ -128,7 +132,7 @@ def is_flat_station(station):
             and elevation is not None and math.isfinite(elevation) and elevation <= 800)
 
 
-def ranked_highlights(source, products, scope=None, key=None, ranking=None, station_group=None):
+def ranked_highlights(source, products, scope=None, key=None, ranking=None, station_group=None, excursion_sink=None):
     """Bounded rankings for both modes/groups, using a single scan per station.
 
     Ten candidates from each disjoint month/year are sufficient for every
@@ -145,7 +149,8 @@ def ranked_highlights(source, products, scope=None, key=None, ranking=None, stat
             groups = [group for group in groups if group == station_group]
         if not groups:
             continue
-        periods = aggregate(source, products, scope, key, [sid], include_values=ranking != 'station')
+        periods = aggregate(source, products, scope, key, [sid], include_values=ranking != 'station',
+                            include_days=scope in (None, 'day'), materialize_periods=True)
         for period_key, data in periods.items():
             for mode in ([ranking] if ranking else ['station', 'value']):
                 for group in groups:
@@ -170,6 +175,20 @@ def ranked_highlights(source, products, scope=None, key=None, ranking=None, stat
                                                  *( (r['dates'][0], r['station_id']) if mode == 'value'
                                                     else (r['station_id'],) )))
                         del rows[10:]
+        for period_key, data in periods.items():
+            item = excursion(period_key, data)
+            if item is None:
+                continue
+            if excursion_sink is not None:
+                excursion_sink.append((sid, period_key[0], period_key[1], item))
+            targets = [period_key, ('month', period_key[1][5:])] if period_key[0] == 'month-year' else [period_key, ('all', 'all')]
+            for target_key in targets:
+                for mode in ([ranking] if ranking else ['station', 'value']):
+                    for group in groups:
+                        target = buckets[(*target_key, mode, group)]
+                        rows = target['records'].setdefault('highest_excursion', [])
+                        merge_excursion(rows, {'station_id': sid, 'record_type': 'highest_excursion',
+                                               'value': item['value'], 'periods': [item], 'dates': []}, mode)
     return buckets
 
 
@@ -180,7 +199,12 @@ def build_index(source, products):
                          ((scope, key, json.dumps(data, separators=(',', ':'), allow_nan=False))
                           for (scope, key), data in buckets.items()))
     products.commit()
-    highlights = ranked_highlights(source, products)
+    excursions = []
+    highlights = ranked_highlights(source, products, excursion_sink=excursions)
+    products.execute('CREATE TABLE station_temperature_ranges (station_id TEXT, scope TEXT, period TEXT, data_json TEXT NOT NULL, PRIMARY KEY(station_id,scope,period)) WITHOUT ROWID')
+    products.executemany('INSERT INTO station_temperature_ranges VALUES (?,?,?,?)',
+                        ((sid, scope, key, json.dumps(item, separators=(',', ':'), allow_nan=False))
+                         for sid, scope, key, item in excursions))
     products.execute('CREATE TABLE national_rankings (scope TEXT, period TEXT, ranking TEXT, station_group TEXT, data_json TEXT NOT NULL, PRIMARY KEY(scope,period,ranking,station_group)) WITHOUT ROWID')
     products.executemany('INSERT INTO national_rankings VALUES (?,?,?,?,?)',
                          ((*key, json.dumps(data, separators=(',', ':'), allow_nan=False))
