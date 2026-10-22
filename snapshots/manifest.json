@@ -5,24 +5,24 @@
     {
       "name": "climate.sqlite",
       "asset": "climate.sqlite.gz",
-      "bytes": 2345512960,
-      "sha256": "305b1cbdf8c4d45b41dcf1805ee3070469b4cfb4e022222d1eea9e7850941edc",
-      "compressed_bytes": 414369156
+      "bytes": 2345533440,
+      "sha256": "8743ac0132e9440feb3c730d8b60f026ab7162c2584214374324bab3d0d0d838",
+      "compressed_bytes": 414384427
     },
     {
       "name": "climatology.sqlite",
       "asset": "climatology.sqlite.gz",
       "bytes": 1657081856,
-      "sha256": "74a0c47314c23456e31a9ed5f7ce382a39e858e2db9cb0d88b537c5f2622c064",
-      "compressed_bytes": 270956511
+      "sha256": "3aa260f6565e6ba92fd05b444269e2fdd11c36a075e3b92c5b4fa7e16b02c0d4",
+      "compressed_bytes": 271108866
     }
   ],
   "review_notes_sha256": "e8b46e38ba5587592662de50d1720729f3937e1e300de4b0f9ad9a9c69f7e66f",
-  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-39660289513-1",
+  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-39838006246-1",
   "refresh": {
     "changed": true,
-    "checked_at": "2026-10-21T19:29:39.967745+00:00",
-    "latest_observation": "2026-10-20",
+    "checked_at": "2026-10-22T19:23:42.624230+00:00",
+    "latest_observation": "2026-10-21",
     "station_count": 160,
     "changed_stations": 159,
     "checked_archives": 320,
@@ -37,7 +37,7 @@
         "year": 2026,
         "reason": "previous_measurements_missing",
         "published_sha256": "c280b29355a40ca3992681485657654242cc465da12df4f5cc919fba075234b2",
-        "downloaded_sha256": "f1a12ecb0796a399dd200ff2535cf2ae1a5daa94cf2b715f0335aee1434666e4",
+        "downloaded_sha256": "fa6ce0975ae000ebed0f65a9fd6738109e9eeabea75b101e99c8e230e6ea7850",
         "missing_measurement_count": 1,
         "missing_measurements": [
           {
