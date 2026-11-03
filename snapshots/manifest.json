@@ -5,26 +5,26 @@
     {
       "name": "climate.sqlite",
       "asset": "climate.sqlite.gz",
-      "bytes": 2347597824,
-      "sha256": "68b26e8c3b22f004d20e890187babee57bda0e23a2493affa334817cbf1c764e",
-      "compressed_bytes": 414623485
+      "bytes": 2347606016,
+      "sha256": "cd251d388d9145abea352084866f68d0293f9ca30f69df86b11866626ab319b1",
+      "compressed_bytes": 414612692
     },
     {
       "name": "climatology.sqlite",
       "asset": "climatology.sqlite.gz",
       "bytes": 1657561088,
-      "sha256": "10d333b55675d6abefac1a4c702c92b04084b6068d876db9720e14e83c1bb448",
-      "compressed_bytes": 274295258
+      "sha256": "a95a67cb4541dc5968be0d82c3936bee53e9663d9bc58726b4f6978f4cb711d0",
+      "compressed_bytes": 274481223
     }
   ],
   "review_notes_sha256": "e8b46e38ba5587592662de50d1720729f3937e1e300de4b0f9ad9a9c69f7e66f",
-  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-41542716368-1",
+  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-41717303056-1",
   "refresh": {
     "changed": true,
-    "checked_at": "2026-11-02T23:20:00.692521+00:00",
+    "checked_at": "2026-11-03T21:11:18.710397+00:00",
     "latest_observation": "2026-11-01",
     "station_count": 160,
-    "changed_stations": 159,
+    "changed_stations": 158,
     "checked_archives": 320,
     "checked_years": [
       2025,
@@ -33,11 +33,31 @@
     "status": "updated_with_retained_archives",
     "retained_archives": [
       {
+        "station_id": "0-20000-0-15343",
+        "year": 2026,
+        "reason": "previous_measurements_missing",
+        "published_sha256": "419077346388293d68dfc7a72fe6f8031d2fe8311fd6c4ad6a78ea1762e627bb",
+        "downloaded_sha256": "7c13ae91ee41738e263a221258d3323f1a536f5b1d79aa1bfcb809c4159ec2cc",
+        "missing_measurement_count": 2,
+        "missing_measurements": [
+          {
+            "date": "2026-10-17",
+            "variable": "tmean_c",
+            "previous_value": 2.3
+          },
+          {
+            "date": "2026-10-17",
+            "variable": "pressure_msl_hpa",
+            "previous_value": 1020.0
+          }
+        ]
+      },
+      {
         "station_id": "0-20000-0-15483",
         "year": 2026,
         "reason": "previous_measurements_missing",
         "published_sha256": "c280b29355a40ca3992681485657654242cc465da12df4f5cc919fba075234b2",
-        "downloaded_sha256": "b092f1bec552a14d855c760e5bb4178afaa9aa4c1d7f05f947d12dfc3798283c",
+        "downloaded_sha256": "13c6e78ba228e6c286b36b1f5f83de7d472a49e1d70197bfe0da4153d48b0f69",
         "missing_measurement_count": 1,
         "missing_measurements": [
           {
