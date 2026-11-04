@@ -5,24 +5,24 @@
     {
       "name": "climate.sqlite",
       "asset": "climate.sqlite.gz",
-      "bytes": 2347606016,
-      "sha256": "cd251d388d9145abea352084866f68d0293f9ca30f69df86b11866626ab319b1",
-      "compressed_bytes": 414612692
+      "bytes": 2347630592,
+      "sha256": "fe208e0feac67f5be888a791bd0c4d7fa6e2219305afaa68f3e4a0b4448895d8",
+      "compressed_bytes": 414661684
     },
     {
       "name": "climatology.sqlite",
       "asset": "climatology.sqlite.gz",
       "bytes": 1657561088,
-      "sha256": "a95a67cb4541dc5968be0d82c3936bee53e9663d9bc58726b4f6978f4cb711d0",
-      "compressed_bytes": 274481223
+      "sha256": "edb3706805c5bf2b9c9c559ebb80849fb0c8d9c5fcff078c51d233a4a4af1fa2",
+      "compressed_bytes": 274786399
     }
   ],
   "review_notes_sha256": "e8b46e38ba5587592662de50d1720729f3937e1e300de4b0f9ad9a9c69f7e66f",
-  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-41717303056-1",
+  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-41914670339-1",
   "refresh": {
     "changed": true,
-    "checked_at": "2026-11-03T21:11:18.710397+00:00",
-    "latest_observation": "2026-11-01",
+    "checked_at": "2026-11-04T21:29:19.749055+00:00",
+    "latest_observation": "2026-11-03",
     "station_count": 160,
     "changed_stations": 158,
     "checked_archives": 320,
@@ -37,7 +37,7 @@
         "year": 2026,
         "reason": "previous_measurements_missing",
         "published_sha256": "419077346388293d68dfc7a72fe6f8031d2fe8311fd6c4ad6a78ea1762e627bb",
-        "downloaded_sha256": "7c13ae91ee41738e263a221258d3323f1a536f5b1d79aa1bfcb809c4159ec2cc",
+        "downloaded_sha256": "36d656cff163fb162148b1c3c5ebdd456f1f7f5f623c2d89bb46973c5b86be44",
         "missing_measurement_count": 2,
         "missing_measurements": [
           {
@@ -57,7 +57,7 @@
         "year": 2026,
         "reason": "previous_measurements_missing",
         "published_sha256": "c280b29355a40ca3992681485657654242cc465da12df4f5cc919fba075234b2",
-        "downloaded_sha256": "13c6e78ba228e6c286b36b1f5f83de7d472a49e1d70197bfe0da4153d48b0f69",
+        "downloaded_sha256": "3380cbb00b8ddecb46ca4d3e7452cd66ff14c9575edd71b0d4ae9d1969d8484f",
         "missing_measurement_count": 1,
         "missing_measurements": [
           {
