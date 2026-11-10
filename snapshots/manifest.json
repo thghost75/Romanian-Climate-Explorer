@@ -5,26 +5,26 @@
     {
       "name": "climate.sqlite",
       "asset": "climate.sqlite.gz",
-      "bytes": 2347671552,
-      "sha256": "3dbb294e5cf232c4b4aee0fad1a80295427656e0f90a230dae6a4a3b31cb6c16",
-      "compressed_bytes": 414662763
+      "bytes": 2347696128,
+      "sha256": "1908c2f6d88381f87076366e70f89b66d6cc1f1fb9edf17a36fb099de25eff9e",
+      "compressed_bytes": 414690146
     },
     {
       "name": "climatology.sqlite",
       "asset": "climatology.sqlite.gz",
-      "bytes": 1657561088,
-      "sha256": "8a738d11a57b2288b425ab9f601318814cea9ce4e66711e4b86e6910d3ab2f37",
-      "compressed_bytes": 275690334
+      "bytes": 1657618432,
+      "sha256": "f57175665df7948463edbd3b4b8d2c2b1fc0a04ba530db6e5cba696c4d6727cc",
+      "compressed_bytes": 275828088
     }
   ],
   "review_notes_sha256": "e8b46e38ba5587592662de50d1720729f3937e1e300de4b0f9ad9a9c69f7e66f",
-  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-42516073552-1",
+  "base_url": "https://github.com/thghost75/Romanian-Climate-Explorer/releases/download/climate-auto-42723094511-1",
   "refresh": {
     "changed": true,
-    "checked_at": "2026-11-08T19:52:51.107312+00:00",
-    "latest_observation": "2026-11-07",
+    "checked_at": "2026-11-09T23:59:46.405581+00:00",
+    "latest_observation": "2026-11-08",
     "station_count": 160,
-    "changed_stations": 158,
+    "changed_stations": 157,
     "checked_archives": 320,
     "checked_years": [
       2025,
@@ -37,7 +37,7 @@
         "year": 2026,
         "reason": "previous_measurements_missing",
         "published_sha256": "419077346388293d68dfc7a72fe6f8031d2fe8311fd6c4ad6a78ea1762e627bb",
-        "downloaded_sha256": "0366eb7f81067ccb7b770b6f4fb443f63d6bdaa0593226dba0da0d3f3d8f1f4f",
+        "downloaded_sha256": "5c010f4e56a42433f456395e9a5a0ff6beb18ff631a9c9464ec7de4d503f7bd0",
         "missing_measurement_count": 2,
         "missing_measurements": [
           {
@@ -53,11 +53,26 @@
         ]
       },
       {
+        "station_id": "0-20000-0-15416",
+        "year": 2026,
+        "reason": "previous_measurements_missing",
+        "published_sha256": "1f4205b6d193e8e8446311fb0f5dcc86fc0eb13b73e206a9b03787b015ed46de",
+        "downloaded_sha256": "b2862fed67d8b4c21661c705956eb90e00d4d327150cff3baf9f2c14f8dc30f7",
+        "missing_measurement_count": 1,
+        "missing_measurements": [
+          {
+            "date": "2026-11-06",
+            "variable": "wind_mean_ms",
+            "previous_value": 2.1
+          }
+        ]
+      },
+      {
         "station_id": "0-20000-0-15483",
         "year": 2026,
         "reason": "previous_measurements_missing",
         "published_sha256": "c280b29355a40ca3992681485657654242cc465da12df4f5cc919fba075234b2",
-        "downloaded_sha256": "67a82908ceafbf3db6c8fbc589b2609c5cdd02dd1097ed2a221983de8b5f11e1",
+        "downloaded_sha256": "02aa1b95c950d652fdcff9b648efe29563c15f622c0efbfcc139dc8d110eea34",
         "missing_measurement_count": 1,
         "missing_measurements": [
           {
