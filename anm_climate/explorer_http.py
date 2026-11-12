@@ -13,6 +13,7 @@ from .explorer_api import Explorer
 _CACHE = OrderedDict()
 _LOCK = threading.Lock()
 _CACHE_LIMIT = 64
+_CDN_POLICY = "public, s-maxage=21600"
 
 def handle_climate(handler, path, query, root=DEFAULT_ROOT):
     """Return True if handled; never serve raw databases or filesystem paths."""
@@ -47,10 +48,18 @@ def handle_climate(handler, path, query, root=DEFAULT_ROOT):
         status=503; body=b'{"error":"Climate data is unavailable. Check server climate-path configuration."}'
     # Host's end_headers may deliberately enforce no-store; server cache still works.
     if etag and handler.headers.get("If-None-Match")==etag:
-        handler.send_response(304); handler.send_header("ETag",etag); handler.end_headers(); return True
+        handler.send_response(304)
+        handler.send_header("ETag",etag)
+        handler.send_header("Vary","Accept-Encoding")
+        handler.send_header("Vercel-CDN-Cache-Control",_CDN_POLICY)
+        handler.end_headers(); return True
     zipped="gzip" in handler.headers.get("Accept-Encoding","") and len(body)>1024
-    if zipped: body=gzip.compress(body)
+    if zipped: body=gzip.compress(body,compresslevel=1)
     handler.send_response(status)
+    if status == 200:
+        handler.send_header("Vercel-CDN-Cache-Control",_CDN_POLICY)
+    else:
+        handler.send_header("Cache-Control","no-store")
     handler.send_header("Content-Type","application/json; charset=utf-8")
     handler.send_header("Content-Length",str(len(body)))
     handler.send_header("X-Content-Type-Options","nosniff")
