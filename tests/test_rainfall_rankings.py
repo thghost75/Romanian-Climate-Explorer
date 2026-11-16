@@ -58,6 +58,30 @@ class RainfallRankingTests(unittest.TestCase):
         self.assertEqual(wet['excluded_period_count'],3)
         self.assertEqual(wet['period_unit'],'year')
 
+    def test_national_rain_totals_and_serving_index(self):
+        from anm_climate.national_rainfall import build_rain_index, highlights
+        for year,total in [(2020,90),(2021,0),(2024,90)]:
+            self.add(year,2,total)
+        self.add(2022,2,990,sample_count=2)
+        self.add(2022,3,500)
+        self.add(2020,None,550)
+        self.add(2021,None,0,eligible_months=6)
+        def check():
+            def get(scope,ranking):
+                return highlights(self.api,scope,2,2021,ranking,self.api.stations)
+            wet,dry=get('month','station')
+            self.assertEqual([p['period'] for p in wet['periods']],['2020-02','2024-02'])
+            self.assertEqual((wet['value'],dry['value']),(90,0))
+            self.assertEqual([r['value'] for r in get('month','value')[:3]],[90,90,0])
+            self.assertEqual(get('month-year','station')[0]['value'],0)
+            self.assertEqual(get('year','value'),[])
+            self.assertEqual(get('all','station')[1]['record_type'],'driest_year')
+            self.assertEqual(get('all','station')[1]['value'],550)
+            self.assertEqual(highlights(self.api,'month',2,2021,'station',{}),[])
+        check()
+        build_rain_index(self.api.products.db)
+        check()
+
     def test_ten_distinct_totals_group_float_equivalent_ties(self):
         for year in range(2000,2012):self.add(year,1,(year-1999)*10)
         self.add(2012,1,0.1+0.2)

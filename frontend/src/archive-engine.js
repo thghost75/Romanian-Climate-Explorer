@@ -116,6 +116,10 @@ function modal(title,body){
  wrap.onkeydown=e=>{if(e.key==="Escape")close();if(e.key==="Tab"){const f=[...wrap.querySelectorAll('button,a,input,select,summary,[tabindex="0"]')];if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===f.at(-1)){e.preventDefault();f[0].focus();}}};wrap.querySelector("button").focus();return wrap.querySelector(".ce-modal-body");
 }
 function recordDetails(r,label,national=false){
+ if(['wettest_month','driest_month','wettest_year','driest_year'].includes(r.record_type)){
+  modal(label+' · rainfall total','<p>Only complete calendar periods with eligible rainfall every day qualify.</p>'+table(['Period','Total rainfall','Flagged dates','Review notes'],r.periods.map(p=>[E(p.period),E(fmt(r.value)+' mm'),E(p.flagged_dates.join(' · ')||'None'),E(p.verification_notes.map(n=>n.review_reason).join('; ')||'None')])));
+  return;
+ }
  if(r.periods){
   const dates=items=>items.map(d=>d.split('-').reverse().join('.')).join(' · ');
   modal(label+' · temperature excursion','<p>Highest eligible Tmax minus lowest eligible Tmin at the same station within each calendar period. Partial periods may underestimate the full range.</p>'+table(['Period','Range','Lowest Tmin · dates','Highest Tmax · dates','Eligible days','Coverage'],r.periods.map(p=>[E(p.period),E(fmt(p.value)+' °C'),E(fmt(p.tmin_c)+' °C · '+dates(p.tmin_dates)),E(fmt(p.tmax_c)+' °C · '+dates(p.tmax_dates)),E('Tmin '+p.tmin_days+' / '+p.expected_days+'; Tmax '+p.tmax_days+' / '+p.expected_days),p.complete?'Complete':'Partial period']))+table(['Period','Extreme','Date','Value °C','Flags / review notes','Source'],r.periods.flatMap(p=>[['Minimum',p.minimum_observations],['Maximum',p.maximum_observations]].flatMap(([kind,items])=>items.map(o=>[E(p.period),kind,E(o.date),E(fmt(o.value))+' '+warn(o),E(JSON.stringify(o.quality_flags||[])+' '+(o.verification_notes||[]).map(n=>n.review_reason).join('; ')),E(o.source_member+':'+o.source_line)])))));
@@ -327,13 +331,14 @@ async function onPeriod(){
  try{
   const d=await api('national-highlights',query);if(id!==serial)return;
   const groups=Object.keys(recordVars).filter(k=>(state.tab!=='on-day'||k!=='highest_excursion')&&!['wettest_month','driest_month','wettest_year','driest_year','highest_monthly_excursion','highest_yearly_excursion'].includes(k));
-  let category=state.nationalCategory;
+  groups.push(...(monthly?['wettest_month','driest_month']:['wettest_year','driest_year']));
+  let category=groups.includes(state.nationalCategory)?state.nationalCategory:'all';
   const show=()=>{
    const rows=d.records.filter(r=>category==='all'||r.record_type===category);
    node.dataset.ready='true';
    node.innerHTML='<div class="ce-heading"><div><div class="ce-eyebrow">'+(monthly?'On this month':'On this year')+' in Romania</div><h2>'+E(d.period_label)+'</h2><p class="ce-muted">'+(state.nationalRanking==='value'?'Top 10 records':'Top 10 station records')+' in each category</p></div></div>'+nationalControls()+nationalExplanation()+'<p class="ce-small ce-muted">'+E(verificationHelp)+'</p>'+
     '<div class="ce-controls"><label>Record category<select id="ce-national-category" aria-label="National record category"><option value="all">All categories</option>'+groups.map(k=>'<option value="'+k+'"'+(category===k?' selected':'')+'>'+E(recordNames[k])+'</option>').join('')+'</select></label><button id="ce-national-export">Export top 10 CSV</button></div>'+
-    '<p class="ce-muted ce-small">'+E(d.station_count)+' of '+E(d.group_station_count)+' stations in this group have eligible observations in this period. Daily amplitude is Tmax − Tmin on the same date. Temperature excursion is the highest Tmax minus lowest Tmin within one calendar month or year at one station; its dates may differ, and partial periods are marked. All-years excursion rankings compare individual months or years. Other values are daily extremes, not averages or totals. Wind is daily mean wind, not gusts. The current year may be incomplete.</p>'+
+    '<p class="ce-muted ce-small">'+E(d.station_count)+' of '+E(d.group_station_count)+' stations in this group have eligible observations in this period. Daily amplitude is Tmax − Tmin on the same date. Temperature excursion is the highest Tmax minus lowest Tmin within one calendar month or year at one station; its dates may differ, and partial periods are marked. All-years excursion rankings compare individual months or years. Wettest and driest rankings use station rainfall totals in mm; only periods with eligible rainfall every day qualify. Other values are daily extremes. Wind is daily mean wind, not gusts. The current year may be incomplete.</p>'+
     (rows.length?table(['Category','Position','Station','Value','Dates / periods','Quality','Explore'],rows.map((r,i)=>[
      E(recordNames[r.record_type]),E(r.rank),E(r.station_name||r.station_id)+'<div class="ce-muted">'+E(r.station_id)+'</div>',
      E(fmt(r.value)+' '+unit[recordVars[r.record_type]]),'<button data-period-record="'+i+'">'+E((r.periods?r.periods.map(p=>p.period):r.dates.map(x=>x.split('-').reverse().join('.'))).slice(0,2).join(' · '))+((r.periods||r.dates).length>2?' · +'+((r.periods||r.dates).length-2):'')+'</button>',

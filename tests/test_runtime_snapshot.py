@@ -32,6 +32,10 @@ class RuntimeSnapshotTests(unittest.TestCase):
             db.commit()
         with closing(sqlite3.connect(self.source / 'climatology.sqlite')) as db:
             for table in PRODUCT_TABLES:
+                if table in ('monthly_summary','annual_summary'):
+                    month = 'month INTEGER,' if table=='monthly_summary' else ''
+                    db.execute(f'CREATE TABLE {table} (station_id TEXT,year INTEGER,{month}data_json TEXT)')
+                    continue
                 if table == 'qc_exclusions':
                     db.execute('CREATE TABLE qc_exclusions (station_id,date,variable,reason)')
                     continue
@@ -52,6 +56,9 @@ class RuntimeSnapshotTests(unittest.TestCase):
             self.assertEqual({r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")},{'stations','daily_observations'})
         with closing(sqlite3.connect(self.destination / 'climatology.sqlite')) as db:
             for table in PRODUCT_TABLES:
+                if table in ('monthly_summary','annual_summary'):
+                    self.assertEqual(db.execute(f'SELECT * FROM {table}').fetchall(), [])
+                    continue
                 if table == 'qc_exclusions':
                     self.assertEqual(db.execute('SELECT * FROM qc_exclusions').fetchall(), [])
                     continue

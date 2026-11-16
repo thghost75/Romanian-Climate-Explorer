@@ -9,6 +9,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from anm_climate.national_records import build_index
+from anm_climate.national_rainfall import build_rain_index
 from anm_climate.reviewed_observations import apply_reviews
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -83,6 +84,7 @@ def prepare(source=None, destination=None):
             reviews = apply_reviews(observations, products)
             print('Preparing compact national record summaries.', flush=True)
             build_index(observations, products)
+            build_rain_index(products)
         notes = (source / NOTES).read_bytes()
         if reviews:
             notes = json.dumps(json.loads(notes) + reviews, ensure_ascii=False).encode('utf-8')
