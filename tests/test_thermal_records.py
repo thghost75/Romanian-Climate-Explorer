@@ -60,6 +60,9 @@ class ThermalRecordTests(unittest.TestCase):
         self.assertEqual([r['value'] for r in selected['ranking']],[20])
         selected=self.api.station_rankings('test','highest_monthly_excursion','month-year',1,1,2024)
         self.assertEqual([r['value'] for r in selected['ranking']],[60])
+        all_months=self.api.station_rankings('test','highest_monthly_excursion','all',11,1,2020)
+        self.assertEqual([r['value'] for r in all_months['ranking']],[60,20])
+        self.assertEqual([p['period'] for p in all_months['ranking'][1]['periods']],['2020-01','2024-02'])
         # Daily national list must not contain period excursions.
         self.assertFalse(any(r['record_type']=='highest_excursion' for r in self.api.national_highlights('day',1,2024)['records']))
 

@@ -36,6 +36,13 @@ class RainfallRankingTests(unittest.TestCase):
         self.assertEqual(wet['sample_count'],3)
         self.assertEqual(wet['excluded_period_count'],2)
         self.assertIsNone(wet['year'])
+        for kind,ordered in [('wettest_month',[999,40,0]),('driest_month',[0,40,999])]:
+            result=self.api.station_rankings('test',kind,'all',11,1,2021)
+            self.assertEqual([r['value'] for r in result['ranking']],ordered)
+            self.assertEqual(result['sample_count'],4)
+            self.assertEqual(result['excluded_period_count'],2)
+            march=next(r for r in result['ranking'] if r['value']==999)
+            self.assertEqual(march['periods'][0]['end_date'],'2024-03-31')
 
     def test_annual_full_archive_excludes_partial_and_ineligible_years(self):
         self.add(2020,None,700)

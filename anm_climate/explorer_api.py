@@ -220,9 +220,9 @@ class Explorer:
     def station_rankings(self, station, kind='lowest_tmin', scope='month', month=1, day=1, year=None):
         """Ten distinct extreme values, grouping every tied observation date."""
         if kind in ('wettest_month','driest_month','wettest_year','driest_year'):
-            return self.rainfall_rankings(station,kind,month)
+            return self.rainfall_rankings(station,kind,month,all_months=scope=='all' and kind.endswith('_month'))
         if kind in ('highest_monthly_excursion', 'highest_yearly_excursion'):
-            return self.excursion_rankings(station, kind, month, year if scope in ('year','month-year') else None)
+            return self.excursion_rankings(station, kind, month, year if scope in ('year','month-year') else None, all_months=scope=='all' and kind=='highest_monthly_excursion')
         from .national_records import period
         info = self.station(station)
         if kind not in RECORD_VARIABLES: raise ValueError('Unknown record category')
@@ -259,15 +259,16 @@ class Explorer:
                 'sample_count':len(valid),'ranking':ranked,
                 'qc_policy':'Up to ten distinct extreme values, numbered 1–10. Equal values are grouped in one row with every tied date retained. Select the dates to inspect them. Missing and quality-excluded values are omitted.'}
 
-    def rainfall_rankings(self, station, kind, month=1):
+    def rainfall_rankings(self, station, kind, month=1, *, all_months=False):
         info = self.station(station)
         monthly = kind.endswith('_month')
         month = int(month)
         if not 1 <= month <= 12: raise ValueError('Month must be between 1 and 12')
         table = 'monthly_summary' if monthly else 'annual_summary'
-        sql = f'SELECT year,data_json FROM {table} WHERE station_id=?'
+        columns = 'year,month,data_json' if monthly else 'year,data_json'
+        sql = f'SELECT {columns} FROM {table} WHERE station_id=?'
         args = [station]
-        if monthly:
+        if monthly and not all_months:
             sql += ' AND month=?'
             args.append(month)
         candidates = []
@@ -276,15 +277,16 @@ class Explorer:
             year = row['year']
             summary = json.loads(row['data_json'])
             rain = summary.get('variables',{}).get('precip_mm',{})
-            expected = calendar.monthrange(year,month)[1] if monthly else 365+int(calendar.isleap(year))
+            period_month = row['month'] if monthly else None
+            expected = calendar.monthrange(year,period_month)[1] if monthly else 365+int(calendar.isleap(year))
             total = rain.get('total')
             if not rain.get('eligible') or rain.get('sample_count') != expected or total is None or not math.isfinite(total) or total < 0 or (not monthly and rain.get('eligible_months') != 12):
                 excluded += 1
                 continue
-            candidates.append({'year':year,'month':month if monthly else None,
-                'period':f'{year}-{month:02d}' if monthly else str(year),
-                'start_date':f'{year}-{month:02d}-01' if monthly else f'{year}-01-01',
-                'end_date':f'{year}-{month:02d}-{expected:02d}' if monthly else f'{year}-12-31',
+            candidates.append({'year':year,'month':period_month,
+                'period':f'{year}-{period_month:02d}' if monthly else str(year),
+                'start_date':f'{year}-{period_month:02d}-01' if monthly else f'{year}-01-01',
+                'end_date':f'{year}-{period_month:02d}-{expected:02d}' if monthly else f'{year}-12-31',
                 'sample_count':expected,'expected_days':expected,'total':round(total,1)})
         candidates.sort(key=lambda p:(p['total'] if kind.startswith('driest') else -p['total'],p['year']))
         groups = []
@@ -299,9 +301,9 @@ class Explorer:
             groups[-1]['periods'].append(item)
             groups[-1]['needs_verification'] |= item['needs_verification']
         return {'station_id':station,'station_name':info['station_name'],'kind':kind,
-                'scope':'month' if monthly else 'all','year':None,'month':month if monthly else None,
+                'scope':'month' if monthly and not all_months else 'all','year':None,'month':month if monthly and not all_months else None,
                 'period_unit':'month' if monthly else 'year',
-                'period_label':f'{date(2000,month,1):%B} totals · full archive' if monthly else 'Annual totals · full archive',
+                'period_label':'All months · all years' if all_months else f'{date(2000,month,1):%B} totals · full archive' if monthly else 'Annual totals · full archive',
                 'sample_count':len(candidates),'excluded_period_count':excluded,'ranking':groups,
                 'qc_policy':'Ten distinct rainfall totals, numbered 1–10; equal totals share one row with every tied period retained. Only complete calendar months or years with eligible rainfall on every day qualify. Incomplete periods are excluded, never treated as dry. Trace rainfall contributes 0 mm.'}
 
@@ -384,7 +386,7 @@ class Explorer:
         obj['incomplete'] = any(not p['complete'] for p in obj['periods'])
         return obj
 
-    def excursion_rankings(self, station, kind, month, year=None):
+    def excursion_rankings(self, station, kind, month, year=None, *, all_months=False):
         from .national_records import aggregate
         info = self.station(station)
         month = int(month)
@@ -402,7 +404,7 @@ class Explorer:
         else:
             periods = [item for key,data in aggregate(self.source,self.products.db,station_ids=[station],include_days=False).items()
                        if key[0] == scope and (item := excursion(key,data)) is not None]
-        periods = [p for p in periods if (not monthly or p['month'] == month) and (year is None or p['year'] == year)]
+        periods = [p for p in periods if (not monthly or all_months or p['month'] == month) and (year is None or p['year'] == year)]
         periods.sort(key=lambda p: (-p['value'], p['period']))
         groups = []
         for p in periods:
@@ -411,8 +413,8 @@ class Explorer:
                 groups.append({'value':p['value'], 'periods':[]})
             groups[-1]['periods'].append(p)
         return {'station_id':station, 'station_name':info['station_name'], 'kind':kind,
-                'scope':('month-year' if monthly else 'year') if year is not None else ('month' if monthly else 'all'), 'period_unit':'month' if monthly else 'year',
-                'period_label':(date(2000,month,1).strftime('%B') if monthly else 'Calendar year')+(' '+str(year) if year is not None else ' · all available years'),
+                'scope':('month-year' if monthly else 'year') if year is not None else ('month' if monthly and not all_months else 'all'), 'period_unit':'month' if monthly else 'year',
+                'period_label':'All months · all years' if all_months else (date(2000,month,1).strftime('%B') if monthly else 'Calendar year')+(' '+str(year) if year is not None else ' · all available years'),
                 'excursion':True, 'sample_count':len(periods),
                 'ranking':[{'rank':i+1, **self.annotate_excursion(station,r)} for i,r in enumerate(groups)],
                 'qc_policy':'Highest eligible Tmax minus lowest eligible Tmin within the same calendar month or year at this station. Dates may differ. Partial periods are included and marked; inspect minimum and maximum dates and coverage. Up to ten distinct ranges; all tied periods retained.'}
