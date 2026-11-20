@@ -368,6 +368,10 @@ class Explorer:
             from .national_rainfall import highlights
             rows.extend(highlights(self, scope, month, year, ranking,
                         {sid:s for sid,s in self.stations.items() if station_group=='all' or is_flat_station(s)}))
+            if scope in ('year', 'all'):
+                rows.extend(highlights(self, scope, month, year, ranking,
+                            {sid:s for sid,s in self.stations.items() if station_group=='all' or is_flat_station(s)},
+                            all_months=True))
         return {'scope':scope, 'period_label':label, 'records':rows, 'limit':10,
                 'ranking':ranking, 'station_group':station_group,
                 'group_station_count':sum(station_group == 'all' or is_flat_station(s) for s in self.stations.values()),

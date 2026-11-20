@@ -331,7 +331,7 @@ async function onPeriod(){
  try{
   const d=await api('national-highlights',query);if(id!==serial)return;
   const groups=Object.keys(recordVars).filter(k=>(state.tab!=='on-day'||k!=='highest_excursion')&&!['wettest_month','driest_month','wettest_year','driest_year','highest_monthly_excursion','highest_yearly_excursion'].includes(k));
-  groups.push(...(monthly?['wettest_month','driest_month']:['wettest_year','driest_year']));
+  groups.push(...(monthly?['wettest_month','driest_month']:['wettest_year','driest_year','wettest_month']));
   let category=groups.includes(state.nationalCategory)?state.nationalCategory:'all';
   const show=()=>{
    const rows=d.records.filter(r=>category==='all'||r.record_type===category);

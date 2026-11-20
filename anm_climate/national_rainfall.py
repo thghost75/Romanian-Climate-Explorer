@@ -32,21 +32,27 @@ def build_rain_index(db):
     db.commit()
 
 
-def highlights(api, scope, month, year, ranking, stations):
-    monthly = scope in ('month', 'month-year')
-    m = month if monthly else 0
+def highlights(api, scope, month, year, ranking, stations, *, all_months=False):
+    monthly = all_months or scope in ('month', 'month-year')
+    m = None if all_months else month if monthly else 0
     y = year if scope in ('year', 'month-year') else None
     db = api.products.db
     if db.execute("SELECT 1 FROM sqlite_master WHERE name='rain_periods'").fetchone():
-        sql = 'SELECT station_id,year,month,total FROM rain_periods WHERE month=?'
-        rows = db.execute(sql + (' AND year=?' if y is not None else ''), (m,y) if y is not None else (m,))
+        sql = 'SELECT station_id,year,month,total FROM rain_periods WHERE ' + ('month BETWEEN 1 AND 12' if all_months else 'month=?')
+        args = [] if all_months else [m]
+        if y is not None:
+            sql += ' AND year=?'
+            args.append(y)
+        rows = db.execute(sql, args)
     else:
-        rows = totals(db, monthly, month if monthly else None, y)
+        rows = totals(db, monthly, m if monthly else None, y)
     entries = [(sid, f'{yr:04}-{mo:02}' if mo else str(yr), value)
                for sid,yr,mo,value in rows if sid in stations]
     result = []
     details = {}
     for prefix, direction in [('wettest', -1), ('driest', 1)]:
+        if all_months and prefix == 'driest':
+            continue
         ordered = sorted(entries, key=lambda e: (direction*e[2], e[0], e[1]) if ranking=='station'
                          else (direction*e[2], e[1], e[0]))
         winners = []
@@ -70,7 +76,7 @@ def highlights(api, scope, month, year, ranking, stations):
             for i, p in enumerate(item['periods']):
                 if (sid,p) not in details:
                     first = p+'-01' if monthly else p+'-01-01'
-                    last = p+f'-{calendar.monthrange(int(p[:4]),m)[1]:02}' if monthly else p+'-12-31'
+                    last = p+f'-{calendar.monthrange(int(p[:4]),int(p[5:7]))[1]:02}' if monthly else p+'-12-31'
                     flags = [r[0] for r in api.source.execute(
                         "SELECT date FROM daily_observations WHERE station_id=? AND date BETWEEN ? AND ? AND quality_flags!='[]' ORDER BY date",
                         (sid,first,last))]
