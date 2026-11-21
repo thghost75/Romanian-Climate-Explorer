@@ -18,6 +18,9 @@ COUNTS = {
  'rain_01_days': ('precip_mm', '>', 0.1),
  'rain_1_days': ('precip_mm', '>', 1),
  'rain_10_days': ('precip_mm', '>', 10),
+ 'least_rain_01_days': ('precip_mm', '>', 0.1),
+ 'least_rain_1_days': ('precip_mm', '>', 1),
+ 'least_rain_10_days': ('precip_mm', '>', 10),
 }
 KINDS = {f'count_{k}_{unit}': (k, unit) for k in COUNTS for unit in ('month','year')}
 POLICY = ('Counts use strict > or < thresholds; equality does not count. Only complete calendar periods '
@@ -86,7 +89,8 @@ def rank(api, entries, stations, kind, mode):
     key,unit=KINDS[kind]
     variable=COUNTS[key][0]
     eligible=[(sid,p) for sid,p in entries if p['coverage'].get(variable,0)==p['expected_days']]
-    eligible.sort(key=lambda x:(-x[1]['counts'][key],x[0] if mode=='station' else x[1]['period'],x[1]['period'] if mode=='station' else x[0]))
+    direction = 1 if key.startswith('least_') else -1
+    eligible.sort(key=lambda x:(direction*x[1]['counts'][key],x[0] if mode=='station' else x[1]['period'],x[1]['period'] if mode=='station' else x[0]))
     groups=[]; leaders={}
     for sid,p in eligible:
         value=p['counts'][key]

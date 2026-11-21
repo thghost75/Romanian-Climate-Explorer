@@ -33,7 +33,7 @@ class CountsTests(unittest.TestCase):
   p=next(p for y,m,p in tc.station_periods(self.source,self.products,'s') if m==1)
   self.assertEqual(p['counts'],dict(tropical_nights=1,summer_days=4,tropical_days=2,scorching_days=1,
    frosty_days=2,freezing_days=1,frosty_nights=5,freezing_nights=3,polar_nights=1,
-   rain_01_days=4,rain_1_days=2,rain_10_days=1))
+   rain_01_days=4,rain_1_days=2,rain_10_days=1,least_rain_01_days=4,least_rain_1_days=2,least_rain_10_days=1))
   self.assertEqual(p['coverage']['precip_mm'],31)
  def test_qc_is_variable_specific_and_incomplete_excluded(self):
   self.products.execute("INSERT INTO qc_exclusions VALUES ('s','2024-02-01','tmin_c')")
@@ -68,3 +68,18 @@ class CountsTests(unittest.TestCase):
   self.assertEqual(len({r['station_id'] for r in by_station}),10)
   self.assertEqual(len(by_value),10)
   self.assertEqual(len({r['station_id'] for r in by_value}),5)
+
+ def test_fewest_preserves_zero_and_excludes_missing_periods(self):
+  self.update('2024-01-01',20,25,15)
+  self.source.execute("UPDATE daily_observations SET precip_mm=NULL WHERE date='2024-03-01'")
+  for indexed in (False,True):
+   if indexed: tc.build_count_index(self.source,self.products)
+   r=tc.station_rankings(self.api,'s','count_least_rain_10_days_month','all',1,None)
+   self.assertEqual([row['value'] for row in r['ranking']],[0,1])
+   zero=r['ranking'][0]
+   self.assertEqual(len(zero['periods']),10)
+   self.assertNotIn('2024-03',[p['period'] for p in zero['periods']])
+   self.assertEqual(r['excluded_period_count'],1)
+   rows=tc.national(self.api,'month-year',2,2024,'value',self.api.stations)
+   result=next(r for r in rows if r['record_type']=='count_least_rain_01_days_month')
+   self.assertEqual(result['value'],0)
