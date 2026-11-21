@@ -218,6 +218,9 @@ class Explorer:
             "records":{k:self.annotate_record(station,merged[k],v) for k,v in RECORD_VARIABLES.items() if k in merged},
             "qc_policy":"Quality-checked observations for each variable; all tied dates retained. Missing days are excluded from sample counts. Source flags remain visible in details."}
     def station_rankings(self, station, kind='lowest_tmin', scope='month', month=1, day=1, year=None):
+        from .threshold_counts import KINDS, station_rankings
+        if kind in KINDS:
+            return station_rankings(self, station, kind, scope, month, year)
         """Ten distinct extreme values, grouping every tied observation date."""
         if kind in ('wettest_month','driest_month','wettest_year','driest_year'):
             return self.rainfall_rankings(station,kind,month,all_months=scope=='all' and kind.endswith('_month'))
@@ -365,6 +368,9 @@ class Explorer:
                 rows.append({**detail,
                              'rank': rank, 'station_id': sid, 'station_name': self.stations[sid]['station_name']})
         if scope != 'day':
+            from .threshold_counts import national
+            rows.extend(national(self, scope, month, year, ranking,
+                        {sid:s for sid,s in self.stations.items() if station_group=='all' or is_flat_station(s)}))
             from .national_rainfall import highlights
             rows.extend(highlights(self, scope, month, year, ranking,
                         {sid:s for sid,s in self.stations.items() if station_group=='all' or is_flat_station(s)}))
